@@ -37,9 +37,26 @@ The simplest population models describe how population-average birth and death r
 
 We can extend these structured population models to develop models which structure a moose population according to tick burden, such that moose vital rates will depend on their burden. This burden-structured model makes it straightforward to model the expected recruitment of questing larval in the following year given information about the current year’s burden distribution and existing estimates of tick recruitment per engorged female tick. Overall, this approach will allow us to simultaneously account for the impact of variable tick burdens on moose vital rates and the joint impact of moose population size and tick burden distribution on tick recruitment. This is critical for understanding how harvesting might alter tick outbreaks. Moreover, modelling results will be easier to interpret for moose researchers and managers since burden-structured models share the ideas underlying the matrix population models commonly used in moose population assessment.
 
-## Model structure
+## Model structure and assumptions
 
-The events in the model follow a simplified version of the 
+The model includes two state variables (quantities we track over time), the abundance of ticks in the environment (questing larvae) and numbers of adult moose cows. The moose population is structured according to tick-burden during the winter and is unstructured at other times. 
+
+Events in the model follow a simplified version of annual sequence of interactions between moose and winter ticks. 
+
+1. Moose acquire ticks from the environment. 
+    + The resulting distribution of burdens is assumed to be have a negative binomial distribution; the negative binomial distribution is used to because it allows for overdispersion which is common for parasites like ticks (Shaw and Dobson, 1999). 
+    + The mean of the burden distribution was assumed to increase with questing larval abundance, i.e., if there are many questing larvae in the environment moose will acquire more ticks which increases the average tick-burden among the moose population. 
+
+2. A proportion of moose is harvested. The probability of being harvested is assumed to be independent of burden. 
+
+3. Moose die. The probability of survival depends on tick-burden.
+
+4. Ticks drop from moose. The expected proportion of ticks that are engorged females lay eggs. Of the laid eggs, some proportion succesfully eclose and will be recruited as questing larvae in the subsequent year.
+
+5. Moose give birth to calves (zero, one, or two). The expected number of calves per moose depends on their previous tick-burden such that heavily-infested moose are more likely to give birth to no calves whereas lightly-infested moose are more likely to give birth to twins.
+    + Note, this current model does not include stage-structure, so moose are immediatly recruited into the adult class.
+
+
 
 ```{r}
 # insert image of model structure here
@@ -68,7 +85,7 @@ To model both tick and moose population dynamics we need to know three propertie
 
 ### Estimating impact of tick-burden on survival and calving
 
-I use a simulated data set to demonstrate how parameters could be estimated from individual-level observations of moose cow tick-burden, survival, and calving. The simulated data set consists of 200 observations of moose with tick loads following a negative binomial distribution (mean = 33,000 ticks/moose, dispersion parameter (k) = 3). The assumption that burden is negative binomial distributed is supported by previous work on parasite aggregation (Shaw and Dobson, 1999). The parameters were chosen to qualitatively to match histograms of winter tick burdens among moose presented by Samuel (2004). Each of the moose in the simulated data set were then assigned a survival outcome and number of calves produced. Survival outcomes and number of calves were assigned from binomial and multinomial distributions, respectively. Probabilities of survival and calving were assumed to be decreasing functions of tick burden. 
+I use a simulated data set to demonstrate how parameters could be estimated from individual-level observations of moose cow tick-burden, survival, and calving. The simulated data set consists of 200 observations of moose with tick loads following a negative binomial distribution (mean = 33,000 ticks/moose, dispersion parameter (k) = 3). The assumption that burden is negative binomial distributed is supported by previous work on parasite aggregation (Shaw and Dobson, 1999). The parameters were chosen to qualitatively match a histogram of winter tick burdens among moose presented by Samuel (2004). Each of the moose in the simulated data set were then assigned a survival outcome and number of calves produced. Survival outcomes and number of calves were assigned from binomial and multinomial distributions, respectively. Probabilities of survival and calving were assumed to be decreasing functions of tick burden. 
 Parameter estimates for the burden structured model were obtained by regressing survival or number of calves onto moose burden. I used logistic regression to estimate survival probabilities and multinomial regression to estimate the expected number of calves. The parameter estimates were used to parameterize projection matrices for the burden-structured model. The simulated data and model fits for the data are shown in the following figures.
 
 ```{r burden_histogram }
