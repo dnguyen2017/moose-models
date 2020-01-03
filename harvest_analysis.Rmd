@@ -39,19 +39,23 @@ We can extend these structured population models to develop models which structu
 
 ## Model structure and assumptions
 
-The model tracks two state variables over time, the abundance of ticks in the environment (questing larvae) and numbers of adult moose cows. Events in the model follow a simplified version of annual sequence of interactions between moose and winter ticks. The following five events happen within each annual time step of the model.
+The model tracks two state variables over time, the abundance of ticks in the environment (questing larvae) and numbers of adult moose cows. Events in the model follow a simplified version of the annual sequence of interactions between moose and winter ticks. The following five events happen within each annual time step of the model.
 
-1. Moose acquire ticks from the environment. 
+1. *Moose acquire ticks from the environment.* 
     + The resulting distribution of burdens is assumed to be have a negative binomial distribution; the negative binomial distribution is used to because it allows for overdispersion which is common for parasites like ticks (Shaw and Dobson, 1999). 
     + The mean of the burden distribution was assumed to increase with questing larval abundance, i.e., if there are many questing larvae in the environment moose will acquire more ticks which increases the average tick-burden among the moose population. 
 
-2. A proportion of moose is harvested. The probability of being harvested is assumed to be independent of burden. 
+2. *A proportion of moose is harvested.* 
+    + The probability of being harvested is assumed to be independent of burden. 
 
-3. Moose die. The probability of survival depends on tick-burden.
+3. *Moose die from natural mortality or tick feeding.* 
+    + There is a constant probability of dying from non-tick related causes.
+    + Ticks affect the probability of dying additively.
 
-4. Ticks drop from moose. The expected proportion of ticks that are engorged females lay eggs. Of the laid eggs, some proportion succesfully eclose and will be recruited as questing larvae in the subsequent year.
+4. *Ticks detach from moose and lay eggs.* 
+    + The expected proportion of ticks that are engorged females lay eggs. Of the laid eggs, some proportion succesfully eclose and will be recruited as questing larvae in the subsequent year.
 
-5. Moose give birth to calves (zero, one, or two). The expected number of calves per moose depends on their previous tick-burden such that heavily-infested moose are more likely to give birth to no calves whereas lightly-infested moose are more likely to give birth to twins.
+5. *Moose give birth to calves (only female calves are tracked).* 
     + Note, this current model does not include stage-structure, so moose are immediatly recruited into the adult class.
     + Moose recruitment is currently density-independent in this model, so moose population in this model grows or declines exponentially when ticks are absent.
 
