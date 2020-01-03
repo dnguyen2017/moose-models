@@ -1,7 +1,7 @@
 ---
 title: "Burden-structured population models for moose"
 author: "David Nguyen"
-date: "December 16, 2019"
+date: "`r Sys.Date()`"
 output: html_document
 ---
 
@@ -41,7 +41,7 @@ We can extend these structured population models to develop models which structu
 
 The model includes two state variables (quantities we track over time), the abundance of ticks in the environment (questing larvae) and numbers of adult moose cows. The moose population is structured according to tick-burden during the winter and is unstructured at other times. 
 
-Events in the model follow a simplified version of annual sequence of interactions between moose and winter ticks. 
+Events in the model follow a simplified version of annual sequence of interactions between moose and winter ticks. For each annual time step of the model, the following five events are simulated.
 
 1. Moose acquire ticks from the environment. 
     + The resulting distribution of burdens is assumed to be have a negative binomial distribution; the negative binomial distribution is used to because it allows for overdispersion which is common for parasites like ticks (Shaw and Dobson, 1999). 
@@ -56,13 +56,9 @@ Events in the model follow a simplified version of annual sequence of interactio
 5. Moose give birth to calves (zero, one, or two). The expected number of calves per moose depends on their previous tick-burden such that heavily-infested moose are more likely to give birth to no calves whereas lightly-infested moose are more likely to give birth to twins.
     + Note, this current model does not include stage-structure, so moose are immediatly recruited into the adult class.
 
+<!-- insert image of model structure here -->
 
-
-```{r}
-# insert image of model structure here
-```
-
-Mathematical details of the model are in the appendix.
+<!-- Mathematical details of the model are in the appendix. -->
 
 ## Data requirements
 
@@ -130,9 +126,9 @@ plot(tick_recr ~ seq(0, 50000, 1000),
 ```
 
 
-### Tick-acquisition process and parameters
+### Parameters for tick-attachment to moose
 
-
+For the tick-attachment process there are at least 3 parameters that need to be estimated. The first two are the mean and shape parameters of the negative binomial distribution which controls the distribution of ticks among moose in this model. At least one or more additional parameters is needed to describe the relationship between the abundance of questing larvae in the environment and the mean tick-burden. For the model shown here, I assume a simple functional form which only has one additonal parameter. The assumed function is shown in the plot below. I have not yet developed the statistical methods for estimating these three parameters (as described in the *Data Requirements* section) nor have have I found estimates in the literature, so, I just chose values that seemed reasonable based on model output.
 
 ```{r acquisition_func_plot}
 mean_burdens <- getMu(seq(0, 2*10^9, 10^5) , max = 50, satrate = 10^9)
