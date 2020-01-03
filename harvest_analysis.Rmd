@@ -67,27 +67,31 @@ The model tracks two state variables over time, the abundance of ticks in the en
 
 To model both tick and moose population dynamics we need to know three properties of this host-parasite system:
 
-1. How variation in tick burden affects moose survival and reproduction.
-    + This can be determined from measurements of tick-burden, survival, and reproduction of individuals over time by regressing tick-burden onto survival and calving. These estimates can then be used to construct population projection matrices for the burden-structured model. An example of this is shown in the following section for simulated data.
+1. *How variation in tick burden affects moose survival and reproduction.*
 
-2. The expected number of larval ticks recruited per moose with a certain tick-burden.
-    + Previous work on tick recruitment (Addison ; Samuel) could be used to to inform estimates of larval tick recruitment. 
+This can be determined from measurements of tick-burden, survival, and reproduction of individuals over time by regressing tick-burden onto survival and calving. These estimates can then be used to construct population projection matrices for the burden-structured model. An example of this is shown in the following section for simulated data.
+
+2. *The expected number of larval ticks recruited per moose with a certain tick-burden.*
+
+Previous work on tick recruitment (Addison ; Samuel) could be used to to inform estimates of larval tick recruitment. While the studies tend to be small, and have little replication or control, they will still be useful as priors for Bayesian estimation of parameters.
     
 <!-- it may be possible to also estimate these params during model fitting to time series data -->
 
-3. How density/abundance of questing larvae impacts the acquisition and distribution of tick burdens among moose. 
-    + This is the most challenging question to answer, but is critical for modeling tick epidemiology. Parameters for this process may be estimated given longitudinal data of moose population abundances and "snapshots" of tick burdens over time. That is, tick counts from harvested moose and/or winter-kill. By combining these data with the proposed burden-structured model, it may be possible to determine tick transmission parameters using Bayesian hierarchical modeling approaches (Hobbs and Hooten). This would require further development of some previous work on estimating parameters for structured population models (Ghosh et al.) and would be an important contribution for modeling diseases.
+3. *How density/abundance of questing larvae impacts the acquisition and distribution of tick burdens among moose.* 
+
+This is the most challenging question to answer, but is critical for modeling tick epidemiology. Parameters for this process may be estimated given longitudinal data of moose population abundances and "snapshots" of tick burdens over time. That is, tick counts from harvested moose and/or winter-kill. By combining these data with the proposed burden-structured model, it may be possible to determine tick transmission parameters using Bayesian hierarchical modeling (Hobbs and Hooten). This would require further development of some previous work on estimating parameters for structured population models (Ghosh et al.). Developing parameter estimation methods from these data for burden-structured models would be an important advance for disease ecology since many human and agricultural diseases have burden-dependent pathology and "snapshot" types of data.
 
 <!-- The model can be parameterized from individual- or population-level data. --> 
 
 <!-- Another type of data that would be useful is longitudinal data of moose population abundances and "snapshots" of tick burdens over time. That is, tick counts from harvested moose and/or winter-kill. By combining these data with the proposed burden-structured model, it may be possible to determine tick transmission parameters using Bayesian hierarchical modeling approaches (Hobbs and Hooten). This would require further development of some previous work on estimating parameters for structured population models (Ghosh et al.) and would be an important contribution for modeling diseases. -->
 
-## Parameter estimation
+## Parameterization
 
 ### Estimating impact of tick-burden on survival and calving
 
-I use a simulated data set to demonstrate how parameters could be estimated from individual-level observations of moose cow tick-burden, survival, and calving. The simulated data set consists of 200 observations of moose with tick loads following a negative binomial distribution (mean = 33,000 ticks/moose, dispersion parameter (k) = 3). The assumption that burden is negative binomial distributed is supported by previous work on parasite aggregation (Shaw and Dobson, 1999). The parameters were chosen to qualitatively match a histogram of winter tick burdens among moose presented by Samuel (2004). Each of the moose in the simulated data set were then assigned a survival outcome and number of calves produced. Survival outcomes and number of calves were assigned from binomial and multinomial distributions, respectively. Probabilities of survival and calving were assumed to be decreasing functions of tick burden. 
-Parameter estimates for the burden structured model were obtained by regressing survival or number of calves onto moose burden. I used logistic regression to estimate survival probabilities and multinomial regression to estimate the expected number of calves. The parameter estimates were used to parameterize projection matrices for the burden-structured model. The simulated data and model fits for the data are shown in the following figures.
+I use a simulated data set to demonstrate how parameters could be estimated from individual-level observations of cow moose. The data set consists of measurements of tick-burden, survival, and calving. Tick burden was simulated following a negative binomial distribution (mean = 33,000 ticks/moose, dispersion parameter (k) = 3). Modeling burden as negative binomial distributed is supported by previous work on parasite aggregation (Shaw and Dobson, 1999). The parameters were chosen to qualitatively match a histogram of winter tick burdens among moose presented by Samuel (2004). Each of the moose in the simulated data set were then assigned a survival outcome and number of calves produced. Survival outcomes and number of calves were assigned from binomial and multinomial distributions, respectively. Probabilities of survival and calving were assumed to be decreasing functions of tick burden. 
+
+Parameter estimates were obtained from the simulated data by regressing survival or number of calves onto moose burden. I used logistic regression to estimate survival probabilities and multinomial regression to estimate the expected number of calves. The parameter estimates were used to parameterize projection matrices for the burden-structured model. The simulated data and model fits for the data are shown in the following figures.
 
 ```{r burden_histogram }
 # Hist presented in Samuel 2004 looks similar to mine.
