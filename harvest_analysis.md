@@ -7,6 +7,7 @@ output:
   #     reference_docx: draft_ms_reference_1.docx
   html_document:
     keep_md: true
+bibliography: harvest_analysis_refs.bib
 ---
 
 
@@ -34,7 +35,7 @@ Overall, this approach will allow us to simultaneously account for the impact of
 The model tracks two state variables over time, the abundance of ticks in the environment (questing larvae) and numbers of adult moose cows. Events in the model follow a simplified version of the annual sequence of interactions between moose and winter ticks. The following five events happen within each annual time step of the model.
 
 1. *Moose acquire ticks from the environment.* 
-    + The resulting distribution of burdens is assumed to be have a negative binomial distribution; the negative binomial distribution is used because it allows for over-dispersion which is common for parasites like ticks (Shaw and Dobson, 1999). 
+    + The resulting distribution of burdens is assumed to be have a negative binomial distribution; the negative binomial distribution is used because it allows for over-dispersion which is common for parasites like ticks [@shaw_patterns_1995]. 
     + The mean of the burden distribution was assumed to increase with questing larval abundance, i.e., if there are many questing larvae in the environment moose will acquire more ticks which increases the average tick-burden among the moose population. The functional form relating abundance of questing larvae and the mean moose burden should be determined from empirical data.
 
 2. *A proportion of moose is harvested.* 
@@ -65,13 +66,13 @@ This can be determined from measurements of tick-burden, survival, and reproduct
 
 2. *The expected number of larval ticks recruited per moose with a certain tick-burden.*
 
-Previous work on tick recruitment (Addison ; Samuel) could be used to to inform estimates of larval tick recruitment. While the studies tend to be small, and have little replication or control, they will still be useful as a starting place for preliminary modeling and later on as priors for Bayesian estimation of parameters.
+Previous work on tick recruitment could be used to to inform estimates of larval tick recruitment. While the studies tend to be small, and have little replication or control, they will still be useful as a starting place for preliminary modeling and later on as priors for Bayesian estimation of parameters.
     
 <!-- it may be possible to also estimate these params during model fitting to time series data -->
 
 3. *How density/abundance of questing larvae impacts the acquisition and distribution of tick burdens among moose.* 
 
-This is the most challenging question to answer, but is critical for modeling tick epidemiology. Parameters for this process may be estimated given longitudinal data of moose population abundances and "snapshots" of tick burdens over time. That is, tick counts from harvested moose and/or winter-kill. By combining these data with the proposed burden-structured model, it may be possible to determine tick transmission parameters using Bayesian hierarchical modeling (Hobbs and Hooten). This would require further development of some previous work on estimating parameters for structured population models (Ghosh et al.). Developing parameter estimation methods from these data for burden-structured models would be an important advance for disease ecology since many human and agricultural diseases have burden-dependent pathology and "snapshot" types of data.
+This is the most challenging question to answer, but is critical for modeling tick epidemiology. Parameters for this process may be estimated given longitudinal data of moose population abundances and "snapshots" of tick burdens over time. That is, tick counts from harvested moose and/or winter-kill. By combining these data with the proposed burden-structured model, it may be possible to determine tick transmission parameters using Bayesian hierarchical modeling [@hobbs_bayesian_2015]. This would require further development of some previous work on estimating parameters for structured population models [@ghosh_inference_2012]. Developing parameter estimation methods from these data for burden-structured models would be an important advance for disease ecology since many human and agricultural diseases have burden-dependent pathology and "snapshot" types of data.
 
 <!-- The model can be parameterized from individual- or population-level data. --> 
 
@@ -81,7 +82,7 @@ This is the most challenging question to answer, but is critical for modeling ti
 
 ### Estimating impact of tick-burden on survival and calving
 
-I use a simulated data set to demonstrate how parameters could be estimated from individual-level observations of cow moose. The data set consists of measurements of tick-burden, survival, and calving. Tick burden was simulated following a negative binomial distribution (mean = 33,000 ticks/moose, dispersion parameter (k) = 3). Modeling burden as negative binomial distributed is supported by previous work on parasite aggregation (Shaw and Dobson, 1999). The parameters were chosen to qualitatively match a histogram of winter tick burdens among moose presented by Samuel (2004). Each of the moose in the simulated data set were then assigned a survival outcome and number of calves produced. Survival outcomes and number of calves were assigned from binomial and multinomial distributions, respectively. Probabilities of survival and calving were assumed to be decreasing functions of tick burden. 
+I use a simulated data set to demonstrate how parameters could be estimated from individual-level observations of cow moose. The data set consists of measurements of tick-burden, survival, and calving. Tick burden was simulated following a negative binomial distribution (mean = 33,000 ticks/moose, dispersion parameter (k) = 3). Modeling burden as negative binomial distributed is supported by previous work on parasite aggregation [@shaw_patterns_1995]. The parameters were chosen to qualitatively match a histogram of winter tick burdens among moose presented by @samuel_white_2004. Each of the moose in the simulated data set were then assigned a survival outcome and number of calves produced. Survival outcomes and number of calves were assigned from binomial and multinomial distributions, respectively. Probabilities of survival and calving were assumed to be decreasing functions of tick burden. 
 
 Parameter estimates were obtained from the simulated data by regressing survival or number of calves onto moose burden. I used logistic regression to estimate survival probabilities and multinomial regression to estimate the expected number of calves. The parameter estimates were used to parameterize projection matrices for the burden-structured model. The simulated data and model fits for the data are shown in the following figures.
 
@@ -93,9 +94,9 @@ Parameter estimates were obtained from the simulated data by regressing survival
 
 ### Parameters for larval tick recruitment
 
-To determine the number of larvae that are recruited from each moose, we need to take the product of the following quantities: the proportion of ticks on a moose that are engorged females, the average number of eggs each engorged female lays, and the expected proportion of those eggs from which larvae eclose and survive until the fall questing season. For the model shown here, I assumed that 25 % of the ticks on a moose survived to become engorged females based on a point estimate reported by Samuel (2004). These surviving engorged females each lay an expected 5,000 eggs which is the upper-bound of winter tick egg-laying (Drummond et al., 1969). I arbitrarily set larval eclosion and survival at 30 % of total eggs, since the controlled studies I have read did not measure eclosion success. These rough estimates and assumptions result in 375 larvae recruited per infesting tick. Below is a plot showing how larval recruitment per moose increases with the moose's tick-burden.
+To determine the number of larvae that are recruited from each moose, we need to take the product of the following quantities: the proportion of ticks on a moose that are engorged females, the average number of eggs each engorged female lays, and the expected proportion of those eggs from which larvae eclose and survive until the fall questing season. For the model shown here, I assumed that 25 % of the ticks on a moose survived to become engorged females based on a point estimate reported by @samuel_white_2004. These surviving engorged females each lay an expected 5,000 eggs which is the upper-bound of winter tick egg-laying [@drummond_biology_1969]. I arbitrarily set larval eclosion and survival at 30 % of total eggs, since the controlled studies I have read did not measure eclosion success. These rough estimates and assumptions result in 375 larvae recruited per infesting tick. Below is a plot showing how larval recruitment per moose increases with the moose's tick-burden.
 
-Note that I'm assuming that larval recruitment is density-independent. That is, there is no difference when comparing the expected number of larvae produced from an engorged female tick from a lightly-infested moose to one from a heavily-infested moose.  Previous work has shown no evidence of density-dependence for tick-burdens ranging between 20,000-40,000 (), however, this may not be true when infestations are heavier. The assumption of density-independent larval recruitment may bias the model by making tick control harder to achieve.
+Note that I'm assuming that larval recruitment is density-independent. That is, there is no difference when comparing the expected number of larvae produced from an engorged female tick from a lightly-infested moose to one from a heavily-infested moose.  Previous work has shown no evidence of density-dependence for tick-burdens ranging between 20,000-40,000 [@addison_growth_1988], however, this may not be true when infestations are heavier. The assumption of density-independent larval recruitment may bias the model by making tick control harder to achieve.
 
 ![](harvest_analysis_files/figure-html/tick_recr_plot-1.png)<!-- -->
 
@@ -124,7 +125,7 @@ At low levels of harvest ($0 <harvest \leq 0.3$) the results are similar to the 
 
 At higher levels of harvest ($0.3 < harvest \leq 1$) both moose and ticks populations decline to zero. But, notice that for intermediate harvesting intensities (0.4 and 0.5)  ticks died out sooner than the moose. This indicates that harvesting can theoretically be used to control winter ticks. This result is an emergent property of the feedback between moose population size and tick recruitment. Since constant harvesting strategies caused extirpation of both moose and ticks, it would be useful to model harvesting strategies that varied with time or were dependent on moose population size.
 
-Using time- or state-dependent harvesting to control tick outbreaks by dynamically regulating moose populations was already proposed by Samuel (2004). However, the success of this approach depends on knowing the critical thresholds where tick outbreaks can occur so that moose populations can be managed below it. By parameterizing the burden-structured models I developed here with field data, it may be possible to estimate the critical moose population thresholds for winter tick outbreaks in a way similar to how herd-immunity thresholds are estimated for vaccine-preventable human diseases. Dynamic optimization methods (stochastic dynamic programming) could be then used to develop state-dependent harvesting strategies to meet specific management objectives.
+Using time- or state-dependent harvesting was proposed by @samuel_white_2004 to control tick outbreaks by dynamically regulating moose populations below levels which allow for tick outbreaks. However, the success of this approach depends on knowing the critical thresholds where tick outbreaks can occur so that moose populations can be managed below it. By parameterizing the burden-structured models I developed here with field data, it may be possible to estimate the critical moose population thresholds for winter tick outbreaks in a way similar to how herd-immunity thresholds are estimated for vaccine-preventable human diseases. Dynamic optimization methods [stochastic dynamic programming; @marescot_complex_2013] could be then used to develop state-dependent harvesting strategies to meet specific management objectives.
 
 ## References
 
