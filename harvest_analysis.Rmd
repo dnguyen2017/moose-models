@@ -68,8 +68,10 @@ To model both tick and moose population dynamics we need to know three propertie
     + This can be determined from measurements of tick-burden, survival, and reproduction of individuals over time by regressing tick-burden onto survival and calving. These estimates can then be used to construct population projection matrices for the burden-structured model. An example of this is shown in the following section for simulated data.
 
 2. The expected number of larval ticks recruited per moose with a certain tick-burden.
-    + Previous work on tick recruitment (Addison ; Samuel) could be used to to inform estimates of larval tick recruitment. However, these data do not provide any information on potential density dependent effects on tick recruitment, e.g., if moose with high tick-burdens have a lower larval recruitment per-engorged-female than moose with lower burdens due to competition.
+    + Previous work on tick recruitment (Addison ; Samuel) could be used to to inform estimates of larval tick recruitment. 
     
+<!-- it may be possible to also estimate these params during model fitting to time series data -->
+
 3. How density/abundance of questing larvae impacts the acquisition and distribution of tick burdens among moose. 
     + This is the most challenging question to answer, but is critical for modeling tick epidemiology. Parameters for this process may be estimated given longitudinal data of moose population abundances and "snapshots" of tick burdens over time. That is, tick counts from harvested moose and/or winter-kill. By combining these data with the proposed burden-structured model, it may be possible to determine tick transmission parameters using Bayesian hierarchical modeling approaches (Hobbs and Hooten). This would require further development of some previous work on estimating parameters for structured population models (Ghosh et al.) and would be an important contribution for modeling diseases.
 
@@ -116,6 +118,8 @@ legend("topright", legend = c("observed recruitment","predicted total recr.", "p
 
 To determine the number of larvae that are recruited from each moose, we need to take the product of the following quantities: the proportion of ticks on a moose that are engorged females, the average number of eggs each engorged female lays, and the expected proportion of those eggs from which larvae eclose and survive until the fall questing season. For the model shown here, I assumed that 25 % of the ticks on a moose survived to become engorged females based on point estimate reported by Samuel (2004). These surviving engorged females each lay an expected $5,000$ eggs which is the upper-bound of winter tick egg-laying (Drummond et al., 1969). I arbitrarily set larval eclosion and survival at 30 % of total eggs, since the controlled studies I have read did not measure eclosion success. These rough estimates and assumptions result in 375 larvae recruited per infesting tick. Below is a plot showing how larval recruitment per moose increases with the moose's tick-burden.
 
+Note that I'm assuming that larval recruitment is density-independent. That is, there is no difference when comparing the expected number of larvae produced from an engorged female tick from a lightly-infested moose to one from a heavily-infested moose.  Previous work has shown no evidence of density-dependence for tick-burdens ranging between 20,000-40,000 (), however, this may not be true when infestations are heavier. The assumption of density-independent larval recruitment may bias the model by making tick control harder to achieve.
+
 ```{r tick_recr_plot}
 tick_recr <- tick.recr.x(seq(0, 50000, 1000),
                          tick.params)
@@ -124,7 +128,6 @@ plot(tick_recr ~ seq(0, 50000, 1000),
      ylab = "larval recruitment",
      xlab = "tick-burden of a moose")
 ```
-
 
 ### Parameters for tick-attachment to moose
 
