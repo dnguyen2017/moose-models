@@ -150,7 +150,7 @@ plot(mean_burdens ~ seq(0, 2*10^9, 10^5),
 
 ## Model output example
 
-In this section, I present some model projections for different levels of harvesting. These projections use the assumptions and hypothetical parameterizations presented above. It wouldn't be appropriate to make any claims about how harvesting might impact an actual moose-tick system Until the model is parameterized with real data from that system. However, the projections shown here do provide a sense of the theoretical outcomes of using harvesting for tick management and demonstrate the potential for using a parameterized version of this model to evaluate how harvesting might impact winter tick outbreaks in real systems.
+In this section, I present some model projections for different levels of harvesting. These projections use the model structure, assumptions, and parameterizations presented above. Of course, it wouldn't be appropriate to make any claims about how harvesting might impact an actual moose-tick system until the model is parameterized with real data. However, these theoretical results demonstrate the potential applications of this model when parameterized with real data to assess alternative harvesting strategies for controlling winter tick outbreaks.
 
 In all simulations I initialize the system with $10^6$ questing larvae and $100$ moose. I then examined how different proportions of constant harvesting impacted moose populations and tick persistence. In the following figures the abundances of questing larvae are presented in the top row and moose abundance in the bottom row. The columns in each plot are the different proportional annual harvest rates for moose, e.g., 0.1 means that a 10 % annual moose harvest was used in the simulation.
 
@@ -164,7 +164,7 @@ filter(harvest_df, harvest == 0.0) %>%
        x = "years")
 ```
 
-In the absence of harvesting, moose can be stably regulated by winter ticks.
+In the absence of harvesting, moose can be stably regulated by winter ticks. The transient "spikes" in both tick and moose abundance are artifacts caused by the assumption of density-independent moose population growth. At the beginning of the simulation, there are too few ticks to regulate moose so they grow exponentially until tick burdens become heavy enough to regulate moose population growth.
 
 ```{r coexistence}
 # when moose are regulated by ticks
@@ -177,7 +177,7 @@ harvest_df %>%
        x = "years")
 ```
 
-At low levels of harvest ($0 <harvest \leq 0.3$) moose and ticks coexist at lower abundances than the unharvested case. These low levels of harvest also produced damped oscillations.
+At low levels of harvest ($0 <harvest \leq 0.3$) the results are similar to the no harvest strategy. The main difference is that moose and ticks coexist at lower abundances than the unharvested case. These low levels of harvest also produced damped oscillations in moose and tick abundances which indicates that harvesting is destabilizing.
 
 ```{r controlled}
 # when ticks are wiped out
@@ -190,9 +190,10 @@ harvest_df %>%
        x = "years")
 ```
 
-At higher levels of harvest ($0.3 < harvest \leq 1$) both moose and ticks were extirpated. However, for intermediate harvesting intensities (0.4 and 0.5)  ticks died out sooner than the moose. This indicates that harvesting can be used to control winter ticks and that time and state dependent harvesting strategies may be promising strategies for controlling winter ticks. 
+At higher levels of harvest ($0.3 < harvest \leq 1$) both moose and ticks populations decline to zero. But, notice that for intermediate harvesting intensities (0.4 and 0.5)  ticks died out sooner than the moose. This indicates that harvesting can theoretically be used to control winter ticks. This result is an emergent property of the feedback between moose population size and tick recruitment. Since constant harvesting strategies caused extirpation of both moose and ticks, it would be useful to model harvesting strategies that varied with time or were dependent on moose population size.
 
-Using state-dependent harvesting intensities to preemptively reduce moose populations prior to expected tick outbreaks were proposed in Samuel 2004. But this approach to tick management depends on knowing the appropriate thresholds at which tick outbreak occur. It may be possible to estimate these thresholds by parameterizing the burden-structured models I developed here and using optimization methods (stochastic dynamic programming) to identify state-dependent harvesting strategies for managing winter tick outbreaks.
+Using time- or state-dependent harvesting to control tick outbreaks by dynamically regulating moose populations was already proposed by Samuel (2004). However, the success of this approach depends on knowing the critical thresholds where tick outbreaks can occur so that moose populations can be managed below it. By parameterizing the burden-structured models I developed here with field data, it may be possible to estimate the critical moose population thresholds for winter tick outbreaks in a way similar to how herd-immunity thresholds are estimated for vaccine-preventable human diseases. Dynamic optimization methods (stochastic dynamic programming) could be then used to develop state-dependent harvesting strategies to meet specific management objectives.
+
 
 <!-- stop knitting here -->
 `r knitr::knit_exit()`
