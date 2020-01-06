@@ -39,14 +39,11 @@ tick.params <- c("pEF" = 0.5,      # proportion of tick load that becomes engorg
 Population models of moose-tick interactions would be useful to determine if and when harvesting can control winter tick outbreaks. The premise for using harvesting to manage winter ticks is that if population growth of ticks depends on the availability its primary host, moose, then reducing moose populations through harvesting should decrease tick population growth rates and prevents outbreaks. This hypothesis results in the counter-intuitive argument that maintaining or increasing harvests can facilitate recovery of moose populations that are subject to frequent tick outbreaks. Through analysis of data-driven population models of moose and winter ticks, we can rigorously test the verbal argument for harvesting and determine the potential for harvesting to achieve management objectives. 
 
 For this purpose -- I developed an extension of the matrix modeling framework commonly used for moose -- the burden-structured model. In the following sections I describe the rationale and structure of the proposed model, data requirements for estimation of model parameters, and examples of model output under different harvesting strategies.
-
  <!-- The two advantages of burden-structured models is that the model accounts for variation in tick-burden and connects the population dynamics of ticks to moose, which are necessary for modeling how harvesting might control tick outbreaks. This is because the scientific reasoning behind using harvesting to control tick outbreaks is that harvesting will reduce moose populations below sizes needed for persistence of ticks. Therefore we must use models that directly relate moose population size and tick-burden distribution to tick population dynamics if we want to evaluate harvesting as a management strategy. -->
-
 <!-- This is because the effect of harvesting on tick population dynamics is indirect -- if harvesting has an effect of tick outbreak potential it is because outbreaks depend on the size of moose populations and/or the distribution of tick-burden. -->
 
 <!-- Preliminary modeling results shown here provide theoretical justification for using harvesting to control winter tick outbreaks. -->
 <!-- A modeling framework that can be used to evaluate how moose harvesting impacts winter tick outbreaks would be useful for assessing outcomes of proposed management actions. To model the potential impacts of harvesting on tick outbreaks we must model the interactions and feedbacks between the population dynamics of moose and the population dynamics of ticks. The inclusion of this interaction between moose and ticks will allow us to mechanistically model how increased harvests could influence tick outbreak frequency and severity. Models that don’t include the mechanisms that connect the effect of moose abundance on tick recruitment cannot be used to assess the impact of harvesting on tick outbreaks since these models have no link between moose density and tick population size/distribution among moose. -->
-
 
 ## Rationale for burden-structured model
 
@@ -213,6 +210,7 @@ At higher levels of harvest ($0.3 < harvest \leq 1$) both moose and ticks popula
 
 Using time- or state-dependent harvesting was proposed by @samuel_white_2004 to control tick outbreaks by dynamically regulating moose populations below levels which allow for tick outbreaks. However, the success of this approach depends on knowing the critical thresholds where tick outbreaks can occur so that moose populations can be managed below it. By parameterizing the burden-structured models I developed here with field data, it may be possible to estimate the critical moose population thresholds for winter tick outbreaks in a way similar to how herd-immunity thresholds are estimated for vaccine-preventable human diseases. Dynamic optimization methods [stochastic dynamic programming; @marescot_complex_2013] could be then used to develop state-dependent harvesting strategies to meet specific management objectives.
 
+##### page break
 ## References
 
 <!-- stop knitting here -->
