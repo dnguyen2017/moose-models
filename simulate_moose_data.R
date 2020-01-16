@@ -70,3 +70,37 @@ data$calves <- sapply(1:200, function(x) which.max(rmultinom(n = 1, size = 1, pr
 # save simulated data
 write_csv(data,"data/simulated_moose_data.csv")
 
+### add calf winter-survival data
+calf_burdens <- rnbinom(n = 200, size = 3, mu = 33000)
+
+s_calf_0 <- 0.8 # w/i ballpark of High winter survival reported in Table 3-5 of Henry Jones' thesis
+beta1_s_calf <- -0.000075
+
+prob_surv_calf <- logEqn(calf_burdens, s_calf_0, beta1_s_calf)
+range(prob_surv)
+
+# compare survival probs
+# plot(prob_surv ~ burdens, ylim = c(0,1), col = "red")
+# points(prob_surv_calf ~ calf_burdens, ylim = c(0,1), col = "blue")
+
+
+# make df of calf data
+calf_data <- tibble(burden = calf_burdens,
+                    psurvival = prob_surv_calf,
+                    survival = rbinom(n=length(calf_burdens), size=1, prob=prob_surv_calf), # generate survival outcomes
+                    ptwin = 0,
+                    psingle = 0,
+                    pnone = 0,
+                    calves = 0,
+                    stage = "calf"
+                    )
+
+# add col to data for stage
+data$stage <- "cow"
+# merge data
+structured_data <- rbind(data, calf_data)
+
+# save simulated stage-structured data
+write_csv(data,"data/simulated_structured_moose_data.csv")
+
+#ggplot(structured_data, aes(x = burden, y = psurvival)) + geom_point() + facet_wrap(~stage, nrow = 2)
