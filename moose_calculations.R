@@ -3,14 +3,19 @@ library(tidyverse)
 ### -----------------------------------------------------
 ### Regressions to estimate burden dependnent vital rates
 ### -----------------------------------------------------
-moose_data <- read_csv("data/simulated_moose_data.csv")
+# moose_data <- read_csv("data/simulated_moose_data.csv") # old cow only data
+moose_data <- read_csv("data/simulated_structured_moose_data.csv") # calf-cow structured data
 
 ### survival ~ burden using logistic model 
-surv.glm <- glm(survival ~ burden, family = binomial, data = moose_data)
-# summary(surv.glm)
+surv_cow <- glm(survival ~ burden, family = binomial, data = filter(moose_data, stage == "cow"))
+surv_calf <- glm(survival ~ burden, family = binomial, data = filter(moose_data, stage == "calf"))
+
+# summary(surv_calf)
 
 ### number of calves ~ burden using multinomial regression
-calves.multi <- nnet::multinom(calves ~ burden, data = moose_data)
+calves.multi <- nnet::multinom(calves ~ burden, 
+                                data = filter(moose_data, stage == "cow")) # note, the filter is not strictly necessary, since all fecundity data for calves are NA
+
 # summary(calves.multi)
 
 ## -------------------------------------------------
