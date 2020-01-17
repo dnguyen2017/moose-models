@@ -68,7 +68,7 @@ data[prob_none < 0,]$pnone <- 0
 data$calves <- sapply(1:200, function(x) which.max(rmultinom(n = 1, size = 1, prob = c(data$pnone[x],data$psingle[x],data$ptwin[x]))) - 1)
 
 # save simulated data
-write_csv(data,"data/simulated_moose_data.csv")
+# write_csv(data,"data/simulated_moose_data.csv")
 
 ### add calf winter-survival data
 calf_burdens <- rnbinom(n = 200, size = 3, mu = 33000)
@@ -101,6 +101,45 @@ data$stage <- "cow"
 structured_data <- rbind(data, calf_data)
 
 # save simulated stage-structured data
-write_csv(data,"data/simulated_structured_moose_data.csv")
+write_csv(structured_data,"data/simulated_structured_moose_data.csv")
 
 #ggplot(structured_data, aes(x = burden, y = psurvival)) + geom_point() + facet_wrap(~stage, nrow = 2)
+
+## save true vital rates
+## used for evaluating regression model estimates
+inputs <- 1:140000
+
+# true survival probabilities
+prob_surv_cow <- logEqn(inputs, p0_s, beta1_s)
+prob_surv_calf <- logEqn(inputs, s_calf_0, beta1_s_calf)
+
+# true calving probabilities
+prob_twin <- logEqn(inputs, p0_f2, beta1_f2)
+prob_single <- logEqn(inputs, p0_f1, beta1_f1)
+prob_none <- 1 - (prob_twin + prob_single)
+
+true_probs <- 
+  tibble(burden = inputs,
+         cow_survival = prob_surv_cow,
+         calf_survival = prob_surv_calf,
+         prob_twin = prob_twin,
+         prob_single = prob_single,
+         prob_none = prob_none) %>%
+  # fix negative calving probabilities
+  mutate(prob_none = ifelse(prob_none < 0, 0, prob_none))
+  
+true_probs <-
+  true_probs %>%
+  # normalize calving probabilities
+  mutate(total_prob = prob_twin + prob_single + prob_none,
+         prob_twin = prob_twin/total_prob,
+         prob_single = prob_single/total_prob,
+         prob_none = prob_none/total_prob,
+         new_total_prob = prob_twin + prob_single + prob_none)
+# # confirm that calving probs are correctly normalized. important for making comparisons to estimated probs later on
+# sum(near(true_probs$new_total_prob, 1)) 
+
+# save df of true_probs
+true_probs %>%
+  select(-c(total_prob, new_total_prob)) %>%
+write_csv("data/true_moose_probabilities.csv")
