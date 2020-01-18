@@ -53,6 +53,13 @@ tick.recr.x <- function(x, params) {
   return(params["pEF"] * params["t.surv"] * params["l.surv"] * params["no.eggs"] * x) # could also estimate no. eggs from poisson distn
 }
 
+# calculate mu (the mean of the tick distribution) based on the abundance of questing larvae
+# plug the output of getMu into attach_matrix during simulations
+getMu <- function(qlarvae, max, satrate) {
+  mu <- max * (qlarvae/(qlarvae + satrate))
+  return(mu)
+}
+
 
 ### -----------------------------------------------------
 ### calf-cow structured matrices
