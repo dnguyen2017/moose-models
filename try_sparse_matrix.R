@@ -182,7 +182,154 @@ moose_model_sparse <- function (n0, # init no. female moose
                      "harvest" = harvest)
 }
 
+### -----------------------------------------------------
+### calf-cow structured matrices
+### -----------------------------------------------------
 
+survival_matrix_str <- function(values,
+                                calf_parameters,
+                                cow_parameters){
+  # dimension of final matrix
+  len <- 2 * length(values)
+  
+  # calculate surv probability for midpoint of each bin
+  surv_calf <- unname(sapply(values, function(x) surv.x(x, calf_parameters)))  
+  surv_cow <- unname(sapply(values, function(x) surv.x(x, cow_parameters)))  
+  
+  # survival matrix has survival probabilities on the diagonal, zero elsewhere
+  surv_mat <- sparseMatrix(i = 1:len, j = 1:len, 
+                           x = c(surv_calf, surv_cow),
+                           dims = list(len, len))  
+  return(surv_mat)
+}
+
+# output looks right
+# survival_matrix_str(1:10,
+#                     calf_parameters = calf.params,
+#                     cow_parameters = moose.params)
+
+
+## calving matrix
+calving_matrix_str <- function(values,      # calc. expected number of calves for these values
+                                  model) {     # regression model to calculate probabilities
+  # dimension of final matrix
+  len <- 2 * length(values)
+  
+  # calculate expected no. calves for midpoint of each bin
+  calving_x <- sapply(values, function(x) recr.x(x, model)) 
+  calf_reproduction <- rep(0, length(values))
+  
+  # first row gets expected calves ~ burden since all calves are born into tick free class
+  calving_mat <- sparseMatrix(i = rep(1, len), j = 1:len,   
+                              x = c(calf_reproduction, calving_x), dims = list(len,len))
+  # add diagonal of ones since all mortality accounted for in surv_mat
+  diag_mat <- sparseMatrix(i = 1:len, j = 1:len,
+                           x = rep(1, len), dims = list(len,len))
+  return(calving_mat + diag_mat)
+}
+
+# output looks right
+# calving_matrix_str(1:10,
+#                    calves.multi)
+
+## matrix to pool all moose into lowest burden class (e.g., all ticks detached)
+pool_matrix_str <- function(values){
+  
+  # dims of matrix per stage
+  len1 <- length(values)
+  # dimension of final matrix
+  len2 <- len1 *2 
+  
+  # indices to fill with 1s
+  row_index <- c(rep(1, len1), # pools calves
+                 rep(len1 + 1, len1)) # pools cows
+  col_index <- 1:len2
+  
+  # creates block diagonal matrix from two matrices of size len1 x len1
+  # with 1s on the first row and zeros elsewhere
+  pool_mat <- sparseMatrix(i = row_index, j = col_index, 
+                           x = rep(1, len2), 
+                           dims = list(len2, len2))
+  return(pool_mat)
+}
+
+# works correctly
+# pool_matrix_str(1:5) %*% c(1:5,1:5)
+
+### tick matrices
+
+# tick attachment matrix
+# assume it all happens in one step and has negative binomial distn
+attach_matrix_str <- function(values, 
+                              size_calf, mu_calf, # burden dist pars for calf
+                              size_cow, mu_cow) {# burden dist pars for cow
+  
+  # dims of matrix per stage
+  len1 <- length(values)
+  # dimension of final matrix
+  len2 <- len1 * 2 
+  
+  # indices to fill with 1s
+  row_index <- 1:len2
+  col_index <- c(rep(1, len1), # calf burden prob
+                 rep(len1 + 1, len1)) # cow burden prob
+  
+  
+  # calculate probabilities of getting x burden
+  calf_x <- dnbinom(values, size = size_calf, mu = mu_calf)
+  cow_x <- dnbinom(values, size = size_cow, mu = mu_cow)
+  
+  # make attachment
+  aMat <- sparseMatrix(i = row_index, j = col_index,
+                       x = c(calf_x, cow_x),
+                       dims = list(len2, len2))
+  return(aMat)
+}
+
+# # works right
+# attach_matrix_str(1:5,
+#                   3, 5,
+#                   3, 5) %*% 
+#   c(c(5,0,0,0,0), c(5,0,0,0,0))
+
+# larval recruitment matrix
+# assumes that ticks on calves and cows have same recruitment
+
+larvae_matrix_str <- function(values,    # use vector of true burdens (scaledpts) - 500 (so that lowest burden class doesn't produce larvae)
+                                 parameters) {
+  # dims of matrix per stage
+  len1 <- length(values)
+  # dimension of final matrix
+  len2 <- len1 *2 
+  
+  # indices to fill with 1s
+  row_index <- c(rep(1, len1), # pools calves
+                 rep(len1 + 1, len1)) # pools cows
+  col_index <- 1:len2
+  
+  # calculate tick recruitment
+  larvae_from_calf <- unname(sapply(values, function(x) tick.recr.x(x, parameters)))
+  larvae_from_cow <- larvae_from_calf
+  
+  larvae_mat <- sparseMatrix(i = row_index, j = col_index, 
+                             x = c(larvae_from_calf, larvae_from_cow),
+                             dims = list(len2, len2))
+  return(larvae_mat)
+}
+
+# works correctly
+# larvae_matrix_str(1:5,
+#                   tick.params)
+
+# alternatively, can also just represent as a vector. remember to get use %*% not regular multiplication
+larvae_vector_str <- function(values,    # use vector of true burdens (scaledpts) - 500 (so that lowest burden class doesn't produce larvae)
+                          parameters) {
+  larvae_x <- unname(sapply(values, function(x) tick.recr.x(x, parameters)))
+  return(c(larvae_x, larvae_x))
+}
+
+# works correctly
+# larvae_vector_str(1:5, tick.params)
 
 # ### -----------------------------------------------------
 # ### Regressions to estimate burden dependnent vital rates
@@ -254,7 +401,7 @@ moose_model_sparse <- function (n0, # init no. female moose
 #                  "saturationRate" = 10^9 # how quickly mu(larvae) -> maxMu
 # )
 # 
-# # check if output makes
+# check if output makes
 # inputs <- seq(0, 10, 1)
 # 
 # survival_matrix_sparse(inputs, moose.params) # survival along diagonal
