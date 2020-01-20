@@ -44,53 +44,45 @@ h_out <- bind_rows(h_sensitivity)
 # save harvest analysis
 write_csv(h_out,"data/structured_harvest_sensitivity_output.csv")
 
-# try plotting some stuff
+# reformat and plot data
 
-# moose faceted by harvest
-h_out %>%
-  ggplot() +
-  geom_line(aes(t, cows), col = "blue") +
-  geom_line(aes(t, calves), col = "red") +
-  facet_wrap(~harvest, scales = "free")
-# larvae faceted by harvest
-h_out %>%
-  ggplot() +
-  geom_line(aes(t, larvae), col = "blue") +
-  geom_line(aes(t, larvae_calf), col = "red") +
-  facet_wrap(~harvest, scales = "free")
+# get tick contribution from each moose stage. 
+# Note, I lose the init value of larvae, since the first value of larvae_calf is NA, so larvae[1] - larvae_calf[1] == NA
+df <-
+  h_out %>% 
+  mutate(larvae_cows = larvae_cows - larvae_calves)
 
-# make new df with larvae and moose abundances gathered so that I can make faceted plots
-# gather moose stages
-h_new <-
-  h_out %>%
-  pivot_longer(c("cows", "calves"),
-               names_to = "moose_stage",
+# make two new cols: spp [moose, larvae] & stage [cows, calves]
+# this allows me to facet by species and then get stage distribution of moose population
+# and the absolute contribution of each moose stage to questing tick recruitment
+df <- 
+  df %>%
+  pivot_longer(cols = c("moose_cows","moose_calves","larvae_cows","larvae_calves"),
+               names_sep = "_",
+               names_to = c("spp", "stage"),
                values_to = "abundance")
-# line
-h_new %>%
-  ggplot() +
-  geom_line(aes(t, abundance, col = moose_stage)) +
-  facet_wrap(~harvest, scales = "free")
-# area
-h_new %>%
-  ggplot() +
-  geom_area(aes(t, abundance, fill = moose_stage)) +
-  facet_wrap(~harvest, scales = "free")
 
-# now gather tick sources
-h_new <-
-  h_out %>%
-  pivot_longer(c("larvae", "larvae_calf"),
-               names_to = "tick_source",
-               values_to = "abundance")
-# line
-h_new %>%
-  ggplot() +
-  geom_line(aes(t, abundance, col = tick_source)) +
-  facet_wrap(~harvest, scales = "free")
+# generate a plot for each harvesting rate
+library(viridis)
 
-# area
-h_new %>%
-  ggplot() +
-  geom_area(aes(t, abundance, fill = tick_source)) +
-  facet_wrap(~harvest, scales = "free")
+p_list <-
+  lapply(harvest_rates, function(x) 
+  filter(df, near(harvest, x) & t < 50 ) %>%
+         ggplot(mapping = aes(x = t, y = abundance, fill = stage)) +
+         geom_area(colour = "white") +
+         labs(title = paste(x*100, "% annual harvest")) +
+         theme_bw() + scale_color_viridis(discrete = T, alpha = 0.8) +
+         facet_wrap(~spp, scales = "free", nrow = 2)
+)
+
+# can now plot each individual harvest rate plot
+p_list[[4]] + 
+  scale_fill_viridis(discrete = T, alpha = c(1,0.5) ) # can specify level specific alpha values
+
+filter(df, near(harvest, rate) & t < 20 ) %>%
+  ggplot(mapping = aes(x = t, y = abundance, fill = stage)) +
+  geom_area(colour = "white") +
+  scale_fill_viridis(discrete = T, alpha = 0.5) +
+  facet_grid(spp ~ harvest, scales = "free")
+
+# try out methods fpr
