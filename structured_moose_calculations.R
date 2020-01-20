@@ -340,9 +340,24 @@ structured_moose_model <- function (initCalf, # init no. female calf moose
   
   # merge and return data matrices
   data_out <- tibble("t" = 0:tfinal,
-                     "cows" = cowPop,
-                     "calves" = calfPop,
-                     "larvae" = larvaePop,
-                     "larvae_calf" = larvae_from_calf,
+                     "moose_cows" = cowPop,
+                     "moose_calves" = calfPop,
+                     "larvae_cows" = larvaePop,
+                     "larvae_calves" = larvae_from_calf,
                      "harvest" = harvest)
+  # moose_out <- tibble("t" = 0:tfinal,
+  #                    "cows" = cowPop,
+  #                    "calves" = calfPop,
+  #                    "spp" = "moose",
+  #                    "harvest" = harvest)
+  # 
+  # tick_out <- tibble("t" = 0:tfinal,
+  #                    "larvae" = larvaePop,
+  #                    "larvae_calf" = larvae_from_calf,
+  #                    "spp" = "tick",
+  #                    "harvest" = harvest)
+  # 
+  # data_out <- inner_join(moose_out, tick_out,
+  #                       by = c("t", "spp", "harvest"))
+  # data_out <- merge(moose_out, tick_out)
 }
