@@ -309,8 +309,9 @@ structured_moose_model <- function (initCalf, # init no. female calf moose
     
     # tick attachment
     pop_t1 <- aMat %*% pop_0            # note, lose a bit of the population since tickMat doesn't sum to 1
-    # calfBurden[t, ] <- as.vector(pop_t1)[1:m]
-    # cowBurden[t, ] <- as.vector(pop_t1)[m+1:(2*m)]
+    # print(as.vector(pop_t1)[1:m])
+    calfBurden[t, ] <- as.vector(pop_t1)[1:m]
+    cowBurden[t, ] <- as.vector(pop_t1)[(m+1):(2*m)]
     
     # harvest
     pop_harvested <- (1 - harvest) * pop_t1 # harvest rate is independant of burden and all ticks on them die
@@ -318,8 +319,8 @@ structured_moose_model <- function (initCalf, # init no. female calf moose
     # burden dependent moose survival
     pop_t2 <- survMat %*% pop_harvested                    
     
-    # calfBurdenWK[t, ] <- as.vector(pop_t2)[1:m]
-    # cowBurdenWK[t, ] <- as.vector(pop_t2)[m+1:(2*m)]
+    calfBurdenWK[t, ] <- as.vector(pop_t2)[1:m]
+    cowBurdenWK[t, ] <- as.vector(pop_t2)[(m+1):(2*m)]
     
     # questing larvae
     q_new <- larvaeMat %*% pop_t2  # pools into first element
@@ -345,19 +346,4 @@ structured_moose_model <- function (initCalf, # init no. female calf moose
                      "larvae_cows" = larvaePop,
                      "larvae_calves" = larvae_from_calf,
                      "harvest" = harvest)
-  # moose_out <- tibble("t" = 0:tfinal,
-  #                    "cows" = cowPop,
-  #                    "calves" = calfPop,
-  #                    "spp" = "moose",
-  #                    "harvest" = harvest)
-  # 
-  # tick_out <- tibble("t" = 0:tfinal,
-  #                    "larvae" = larvaePop,
-  #                    "larvae_calf" = larvae_from_calf,
-  #                    "spp" = "tick",
-  #                    "harvest" = harvest)
-  # 
-  # data_out <- inner_join(moose_out, tick_out,
-  #                       by = c("t", "spp", "harvest"))
-  # data_out <- merge(moose_out, tick_out)
 }
