@@ -64,30 +64,25 @@ df <-
 
 # generate a plot for each harvesting rate
 library(viridis)
-viridis(3, alpha = 0.5)
-my_pal <- c("cows" = "#44015480", "calves" = "#21908CFF")
 
-plist <-
+p_list <-
   lapply(harvest_rates, function(x) 
   filter(df, near(harvest, x) & t < 50 ) %>%
          ggplot(mapping = aes(x = t, y = abundance, fill = stage)) +
          geom_area(colour = "white") +
          labs(title = paste(x*100, "% annual harvest")) +
-         theme_bw() + 
-    # scale_color_viridis(discrete = T, alpha = 0.8) +
-    scale_fill_manual(values = my_pal) +
+         theme_bw() + scale_color_viridis(discrete = T, alpha = 0.8) +
          facet_wrap(~spp, scales = "free", nrow = 2)
 )
 
 # can now plot each individual harvest rate plot
-plist[[4]] + theme(legend.position = "n")
+p_list[[4]] + 
+  scale_fill_viridis(discrete = T, alpha = c(1,0.5) ) # can specify level specific alpha values
 
-filter(df, near(harvest, rate) & t < 50 ) %>%
+filter(df, near(harvest, rate) & t < 20 ) %>%
   ggplot(mapping = aes(x = t, y = abundance, fill = stage)) +
   geom_area(colour = "white") +
-  scale_fill_manual(values = my_pal) +
-  #scale_fill_viridis(discrete = T, alpha = 0.5) +
-  theme_bw() +
+  scale_fill_viridis(discrete = T, alpha = 0.5) +
   facet_grid(spp ~ harvest, scales = "free")
 
-# try out methods for 
+# try out methods fpr
