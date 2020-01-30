@@ -276,6 +276,8 @@ structured_moose_model <- function (initCalf, # init no. female calf moose
   cowPop <- c(initCow, rep(0, tfinal - 1))
   larvaePop <- c(q0, rep(0, tfinal - 1))
   larvae_from_calf <- c(NA, rep(0, tfinal - 1)) 
+  meanCalfBurden <- rep(NA, tfinal)
+  meanCowBurden <- rep(NA, tfinal)
   
   # save burden structure seperatly for calf and cow
   calfBurden <- matrix(0, nrow = tfinal, ncol = m) # after acquisition
@@ -313,6 +315,10 @@ structured_moose_model <- function (initCalf, # init no. female calf moose
     calfBurden[t, ] <- as.vector(pop_t1)[1:m]
     cowBurden[t, ] <- as.vector(pop_t1)[(m+1):(2*m)]
     
+    # calculate mean burdens pre-harvest (since this is what would be sampled in check station data)
+    meanCalfBurden <- (calfBurden[t, ] * scaledpts)/sum(calfBurden[t,])
+    meanCowBurden <- (cowBurden[t, ] * scaledpts)/sum(cowBurden[t,])
+    
     # harvest
     pop_harvested <- (1 - harvest) * pop_t1 # harvest rate is independant of burden and all ticks on them die
     
@@ -345,5 +351,7 @@ structured_moose_model <- function (initCalf, # init no. female calf moose
                      "moose_calves" = calfPop,
                      "larvae_cows" = larvaePop,
                      "larvae_calves" = larvae_from_calf,
-                     "harvest" = harvest)
+                     "harvest" = harvest,
+                     "moose_calvesBurden" = meanCalfBurden,
+                     "moose_cowsBurden" = meanCowBurden)
 }
