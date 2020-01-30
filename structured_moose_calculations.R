@@ -316,8 +316,8 @@ structured_moose_model <- function (initCalf, # init no. female calf moose
     cowBurden[t, ] <- as.vector(pop_t1)[(m+1):(2*m)]
     
     # calculate mean burdens pre-harvest (since this is what would be sampled in check station data)
-    meanCalfBurden[t+1] <- (calfBurden[t, ] * scaledpts)/sum(calfBurden[t,])
-    meanCowBurden[t+1] <- (cowBurden[t, ] * scaledpts)/sum(cowBurden[t,])
+    meanCalfBurden[t+1] <- sum(calfBurden[t, ] * scaledpts)/sum(calfBurden[t,])
+    meanCowBurden[t+1] <- sum(cowBurden[t, ] * scaledpts)/sum(cowBurden[t,])
     
     # harvest
     pop_harvested <- (1 - harvest) * pop_t1 # harvest rate is independant of burden and all ticks on them die
