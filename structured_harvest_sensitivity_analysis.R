@@ -57,10 +57,16 @@ df <-
 # and the absolute contribution of each moose stage to questing tick recruitment
 df <- 
   df %>%
-  pivot_longer(cols = c("moose_cows","moose_calves","larvae_cows","larvae_calves"),
+  pivot_longer(#cols = c("moose_cows","moose_calves","larvae_cows","larvae_calves"),
+    cols = -c(t,harvest),
                names_sep = "_",
                names_to = c("spp", "stage"),
-               values_to = "abundance")
+               values_to = "abundance_or_mean")
+
+# plot mean burdens
+filter(df, stage %in% c("calvesBurden", "cowsBurden")) %>%
+  ggplot(aes(t, abundance_or_mean)) + geom_line() +
+  facet_wrap(~harvest)
 
 # generate a plot for each harvesting rate
 library(viridis)
