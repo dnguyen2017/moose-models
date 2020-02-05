@@ -12,13 +12,40 @@ bibliography: harvest_analysis_refs.bib
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE)
-source("moose_calculations.R")
-harvest_df <- read_csv("data/harvest_sensitivity_output.csv")
+
+source("structured_moose_calculations.R")
+
+library(tidyverse)
+library(viridis)
+
+# load and tidy data
+h_out <- read_csv("data/structured_harvest_sensitivity_output.csv")
+
+# get tick contribution from each moose stage. 
+# Note, I lose the init value of larvae, since the first value of larvae_calf is NA, so larvae[1] - larvae_calf[1] == NA
+df <-
+  h_out %>% 
+  mutate(larvae_cows = larvae_cows - larvae_calves)
+
+# make two new cols: spp [moose, larvae] & stage [cows, calves]
+# this allows me to facet by species and then get stage distribution of moose population
+# and the absolute contribution of each moose stage to questing tick recruitment
+df <- 
+  df %>%
+  pivot_longer(#cols = c("moose_cows","moose_calves","larvae_cows","larvae_calves"),
+    cols = -c(t,harvest),
+               names_sep = "_",
+               names_to = c("spp", "stage"),
+               values_to = "abundance_or_mean")
 
 # params for moose survival
-moose.params <- c("surv.int" = unname(coef(surv.glm)[1]),
-                "surv.slope" = unname(coef(surv.glm)[2])
-                )
+# params for moose survival
+cow.params <- c("surv.int" = unname(coef(surv_cow)[1]),
+                "surv.slope" = unname(coef(surv_cow)[2])
+)
+calf.params <- c("surv.int" = unname(coef(surv_calf)[1]),
+                 "surv.slope" = unname(coef(surv_calf)[2])
+)
 # note, calves.multi is the multinomial regression model for the calving function
 
 tick.params <- c("pEF" = 0.5,      # proportion of tick load that becomes engorged female
@@ -28,6 +55,12 @@ tick.params <- c("pEF" = 0.5,      # proportion of tick load that becomes engorg
                  "maxMu" = 50,     # maximum mean of the burden dist'n. In thousands of ticks.
                  "saturationRate" = 10^9 # how quickly mu(larvae) -> maxMu
                  )
+
+# true survival and calving probabilities
+true_probs <- read_csv("data/true_moose_probabilities.csv")
+
+# set color palette
+my_pal <- c("cows" = "#44015480", "calves" = "#21908CFF")
 ```
 
 ## Purpose
@@ -36,7 +69,7 @@ tick.params <- c("pEF" = 0.5,      # proportion of tick load that becomes engorg
 <!-- Modeling the interactions between moose and winter ticks would be useful for evaluating the proposed use of harvesting to mitigate tick outbreaks. -->
 <!-- Models are useful for evaluating if wildlife management strategies can achieve management goals. Here, I propose an extension of matrix models that can be used to determine if and when harvesting can control winter tick outbreaks among moose populations.  -->
 
-Population models of moose-tick interactions would be useful to determine if and when harvesting can control winter tick outbreaks. The premise for using harvesting to manage winter ticks is that if population growth of ticks depends on the availability its primary host, moose, then reducing moose populations through harvesting should decrease tick population growth rates and prevents outbreaks. This hypothesis results in the counter-intuitive argument that maintaining or increasing harvests can facilitate recovery of moose populations that are subject to frequent tick outbreaks. Through analysis of data-driven population models of moose and winter ticks, we can rigorously test the verbal argument for harvesting and determine the potential for harvesting to achieve management objectives. 
+Population models of moose-tick interactions would be useful to determine if and when harvesting can control winter tick outbreaks. The premise for using harvesting to manage winter ticks is that if population growth of ticks depends on the availability its primary host (moose) then reducing moose populations through harvesting should decrease tick population growth rates and prevent outbreaks. This hypothesis results in the counter-intuitive argument that maintaining or increasing harvests can facilitate recovery of moose populations that are subject to frequent tick outbreaks. As far as I know, host thresholds for winter ticks were first hypothesized by @samuel_factors_2007 based on his research in Elk Island national park. Winter tick outbreaks appeared to be more frequent when moose densities were ~3 moose/km^2^ and were rarer when around 1 moose/km^2^ [@samuel_white_2004, @samuel_factors_2007]Through analysis of data-driven population models of moose and winter ticks, we can rigorously test the verbal argument for harvesting and determine the potential for harvesting to achieve management objectives. 
 
 For this purpose -- I developed an extension of the matrix modeling framework commonly used for moose -- the burden-structured model. In the following sections I describe the rationale and structure of the proposed model, data requirements for estimation of model parameters, and examples of model output under different harvesting strategies.
  <!-- The two advantages of burden-structured models is that the model accounts for variation in tick-burden and connects the population dynamics of ticks to moose, which are necessary for modeling how harvesting might control tick outbreaks. This is because the scientific reasoning behind using harvesting to control tick outbreaks is that harvesting will reduce moose populations below sizes needed for persistence of ticks. Therefore we must use models that directly relate moose population size and tick-burden distribution to tick population dynamics if we want to evaluate harvesting as a management strategy. -->
@@ -47,7 +80,7 @@ For this purpose -- I developed an extension of the matrix modeling framework co
 
 ## Rationale for burden-structured model
 
-The simplest population models describe how population-average birth and death rates dictate changes in a population over time. However, variation between individuals causes variation in survival and reproduction (vital rates) among individuals. For instance, vital rates of a particular animal commonly depend on characteristics like stage (e.g., calf, yearling, adult), age, and/or size. This is the motivation behind matrix population models which structure populations into discrete classes based on a variable like size. By accounting for realistic variation, structured models can be connected to empirical data and generate more accurate projections. 
+The simplest population models describe how population-average birth and death rates dictate changes in a population over time. However, variation between individuals causes variation in survival and reproduction (vital rates) among individuals. For instance, vital rates of a particular animal commonly depend on characteristics like stage (e.g., calf, yearling, adult), age, and/or size. This is the motivation behind matrix population models which structure populations into discrete classes which may each have . By accounting for realistic variation, structured models can be connected to empirical data and generate more accurate projections. 
 
 Since tick-burden varies among moose and the fitness consequences suffered by each moose varies depending on the numbers of ticks it carries, we need to explicitly model variation in tick-burden. Using burden-structured models, we can then estimate how much individual-level moose survival and reproduction decreases with tick-burden, and make model projections to reveal the population-level consequences of winter ticks on moose. By modeling variation in tick-burden, these models also make it possible to connect moose and tick population dynamics. This is because the numbers of questing larvae each fall depends on the numbers of ticks feeding on moose the previous year, which is obtained in the model by summing the tick-burdens over the moose population from the previous year. By including this dependence of tick recruitment on moose abundance and tick-burden we can assess the hypothesis that harvesting can be used to manage ticks.
 
@@ -109,24 +142,13 @@ I use a simulated data set to demonstrate how parameters could be estimated from
 
 Parameter estimates were obtained from the simulated data by regressing survival or number of calves onto moose burden. I used logistic regression to estimate survival probabilities and multinomial regression to estimate the expected number of calves. The parameter estimates were used to parameterize projection matrices for the burden-structured model. The simulated data and model fits for the data are shown in the following figures.
 
-```{r burden_histogram }
+```{r burden_histogram, out.width = '50%', fig.show='hold' }
 # Hist presented in Samuel 2004 looks similar to mine.
 hist(moose_data$burden, breaks = seq(0, 140000, 10000),
      main = "Simulated distribution of tick burdens on moose",
      xlab = "Tick burden",
      ylab = "Number of moose")
 
-```
-
-```{r survival_fit}
-# compare actual outcomes with model fits
-plot(survival ~ burden, data = moose_data, ylab = "survival outcome or probablity", xlab = "tick burden", main = "Simulated survival data and model fit")
-lines(predict.glm(surv.glm, tibble(burden = 0:140000), type = "response"), col = "red")
-legend("topright", legend = c("observed survival","estimated survival probability"), col = c("black","red"), lty = c(NA,1), pch = c(1,NA))
-
-```
-
-```{r calving_fit}
 # compare predicted female recruitment with actual data
 pred_recr = tibble(burden = 0:140000, recruitment = recr.x.vector(burden, calves.multi))
 
@@ -136,6 +158,27 @@ lines(pred_recr, col = "red", lty = 2)
 lines( (2*recruitment) ~ burden, pred_recr, col = "blue")
 legend("topright", legend = c("observed recruitment","predicted total recr.", "predicted female recr."), col = c("black","blue","red"), lty = c(NA,1,2), pch = c(1,NA,NA))
 ```
+
+```{r survival_fit, out.width = '50%', fig.show='hold'}
+# compare actual outcomes with model fits
+plot(survival ~ burden, 
+     data = filter(moose_data, stage == "cow"), 
+     ylab = "survival outcome or probablity", xlab = "tick burden", main = "Simulated cow survival data and model fit",
+     pch = 19, col = rgb(0,0,0, alpha = 0.3))
+lines(predict.glm(surv_cow, tibble(burden = 0:140000), type = "response"), col = "red")
+lines(true_probs$cow_survival ~ true_probs$burden, col = "blue", lty = 2, lwd = 2)
+legend("topright", legend = c("observed survival","estimated survival probability", "true survival probability"), col = c("black","red", "blue"), lty = c(NA,1,2), pch = c(1,NA,NA))
+
+plot(survival ~ burden, 
+     data = filter(moose_data, stage == "calf"), 
+     ylab = "survival outcome or probablity", xlab = "tick burden", main = "Simulated calf survival data and model fit",
+     pch = 19, col = rgb(0,0,0, alpha = 0.3))
+lines(predict.glm(surv_calf, tibble(burden = 0:140000), type = "response"), col = "red")
+lines(true_probs$calf_survival ~ true_probs$burden, col = "blue", lty = 2, lwd = 2)
+legend("topright", legend = c("observed survival","estimated survival probability", "true survival probability"), col = c("black","red", "blue"), lty = c(NA,1,2), pch = c(1,NA,NA))
+```
+
+`r knitr::knit_exit()`
 
 ### Parameters for larval tick recruitment
 
