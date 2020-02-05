@@ -20,11 +20,15 @@ library(viridis)
 
 # load and tidy data
 h_out <- read_csv("data/structured_harvest_sensitivity_output.csv")
+h_out_flat <- read_csv("data/flat_structured_harvest_sensitivity_output.csv")
 
 # get tick contribution from each moose stage. 
 # Note, I lose the init value of larvae, since the first value of larvae_calf is NA, so larvae[1] - larvae_calf[1] == NA
 df <-
   h_out %>% 
+  mutate(larvae_cows = larvae_cows - larvae_calves)
+df_flat <-
+  h_out_flat %>% 
   mutate(larvae_cows = larvae_cows - larvae_calves)
 
 # make two new cols: spp [moose, larvae] & stage [cows, calves]
@@ -32,6 +36,14 @@ df <-
 # and the absolute contribution of each moose stage to questing tick recruitment
 df <- 
   df %>%
+  pivot_longer(#cols = c("moose_cows","moose_calves","larvae_cows","larvae_calves"),
+    cols = -c(t,harvest),
+               names_sep = "_",
+               names_to = c("spp", "stage"),
+               values_to = "abundance_or_mean")
+
+df_flat <- 
+  df_flat %>%
   pivot_longer(#cols = c("moose_cows","moose_calves","larvae_cows","larvae_calves"),
     cols = -c(t,harvest),
                names_sep = "_",
@@ -69,7 +81,7 @@ my_pal <- c("cows" = "#44015480", "calves" = "#21908CFF")
 <!-- Modeling the interactions between moose and winter ticks would be useful for evaluating the proposed use of harvesting to mitigate tick outbreaks. -->
 <!-- Models are useful for evaluating if wildlife management strategies can achieve management goals. Here, I propose an extension of matrix models that can be used to determine if and when harvesting can control winter tick outbreaks among moose populations.  -->
 
-Population models of moose-tick interactions would be useful to determine if and when harvesting can control winter tick outbreaks. The premise for using harvesting to manage winter ticks is that if population growth of ticks depends on the availability its primary host (moose) then reducing moose populations through harvesting should decrease tick population growth rates and prevent outbreaks. This hypothesis results in the counter-intuitive argument that maintaining or increasing harvests can facilitate recovery of moose populations that are subject to frequent tick outbreaks. As far as I know, host thresholds for winter ticks were first hypothesized by @samuel_factors_2007 based on his research in Elk Island national park. Winter tick outbreaks appeared to be more frequent when moose densities were ~3 moose/km^2^ and were rarer when around 1 moose/km^2^ [@samuel_white_2004, @samuel_factors_2007]Through analysis of data-driven population models of moose and winter ticks, we can rigorously test the verbal argument for harvesting and determine the potential for harvesting to achieve management objectives. 
+Population models of moose-tick interactions would be useful to determine if and when harvesting can control winter tick outbreaks. The premise for using harvesting to manage winter ticks is that if population growth of ticks depends on the availability its primary host (moose) then reducing moose populations through harvesting should decrease tick population growth rates and prevent outbreaks. This hypothesis results in the counter-intuitive argument that maintaining or increasing harvests can facilitate recovery of moose populations that are subject to frequent tick outbreaks. As far as I know, host thresholds for winter ticks were first hypothesized by @samuel_factors_2007 based on his research in Elk Island national park. Winter tick outbreaks appeared to be more frequent when moose densities were ~3 moose/km^2^ and were rarer when around 1 moose/km^2^ [@samuel_white_2004, @samuel_factors_2007]. Through analysis of data-driven population models of moose and winter ticks, we can rigorously test the verbal argument for harvesting and determine the potential for harvesting to achieve management objectives. 
 
 For this purpose -- I developed an extension of the matrix modeling framework commonly used for moose -- the burden-structured model. In the following sections I describe the rationale and structure of the proposed model, data requirements for estimation of model parameters, and examples of model output under different harvesting strategies.
  <!-- The two advantages of burden-structured models is that the model accounts for variation in tick-burden and connects the population dynamics of ticks to moose, which are necessary for modeling how harvesting might control tick outbreaks. This is because the scientific reasoning behind using harvesting to control tick outbreaks is that harvesting will reduce moose populations below sizes needed for persistence of ticks. Therefore we must use models that directly relate moose population size and tick-burden distribution to tick population dynamics if we want to evaluate harvesting as a management strategy. -->
@@ -80,7 +92,7 @@ For this purpose -- I developed an extension of the matrix modeling framework co
 
 ## Rationale for burden-structured model
 
-The simplest population models describe how population-average birth and death rates dictate changes in a population over time. However, variation between individuals causes variation in survival and reproduction (vital rates) among individuals. For instance, vital rates of a particular animal commonly depend on characteristics like stage (e.g., calf, yearling, adult), age, and/or size. This is the motivation behind matrix population models which structure populations into discrete classes which may each have . By accounting for realistic variation, structured models can be connected to empirical data and generate more accurate projections. 
+The simplest population models describe how population-average birth and death rates dictate changes in a population over time. However, differences between individuals causes variation in survival and reproduction (vital rates) among individuals in a population. For instance, vital rates of a particular animal commonly depend on characteristics like stage (e.g., calf, yearling, adult), age, and/or size. This is the motivation behind matrix population models which structure populations into discrete classes which may each have different vital rates. By accounting for realistic variation in survival and reproduction among individuals, structured models can be connected to empirical data and generate more accurate projections. 
 
 Since tick-burden varies among moose and the fitness consequences suffered by each moose varies depending on the numbers of ticks it carries, we need to explicitly model variation in tick-burden. Using burden-structured models, we can then estimate how much individual-level moose survival and reproduction decreases with tick-burden, and make model projections to reveal the population-level consequences of winter ticks on moose. By modeling variation in tick-burden, these models also make it possible to connect moose and tick population dynamics. This is because the numbers of questing larvae each fall depends on the numbers of ticks feeding on moose the previous year, which is obtained in the model by summing the tick-burdens over the moose population from the previous year. By including this dependence of tick recruitment on moose abundance and tick-burden we can assess the hypothesis that harvesting can be used to manage ticks.
 
@@ -178,8 +190,6 @@ lines(true_probs$calf_survival ~ true_probs$burden, col = "blue", lty = 2, lwd =
 legend("topright", legend = c("observed survival","estimated survival probability", "true survival probability"), col = c("black","red", "blue"), lty = c(NA,1,2), pch = c(1,NA,NA))
 ```
 
-`r knitr::knit_exit()`
-
 ### Parameters for larval tick recruitment
 
 To determine the number of larvae that are recruited from each moose, we need to take the product of the following quantities: the proportion of ticks on a moose that are engorged females, the average number of eggs each engorged female lays, and the expected proportion of those eggs from which larvae eclose and survive until the fall questing season. For the model shown here, I assumed that 25 % of the ticks on a moose survived to become engorged females based on a point estimate reported by @samuel_white_2004. These surviving engorged females each lay an expected 5,000 eggs which is the upper-bound of winter tick egg-laying [@drummond_biology_1969]. I arbitrarily set larval eclosion and survival at 30 % of total eggs, since the controlled studies I have read did not measure eclosion success. These rough estimates and assumptions result in 375 larvae recruited per infesting tick. Below is a plot showing how larval recruitment per moose increases with the moose's tick-burden.
@@ -213,40 +223,84 @@ In this section, I present some model projections for different levels of harves
 
 In all simulations I initialize the system with $10^6$ questing larvae and $100$ moose. I then examined how different proportions of constant harvesting impacted moose populations and tick persistence. In the following figures the abundances of questing larvae are presented in the top row and moose abundance in the bottom row. The columns in each plot are the different proportional annual harvest rates for moose, e.g., 0.1 means that a 10 % annual moose harvest was used in the simulation.
 
+```{r make_plots}
+harvest_rates <- seq(0, 1, 0.1)
+plist <-
+  lapply(harvest_rates, function(x) 
+    filter(df, near(harvest, x) & t < 50 & stage %in% c("cows","calves") ) %>%
+      ggplot(mapping = aes(x = t, y = abundance_or_mean, fill = stage)) +
+      geom_area(colour = "white") +
+      labs(title = paste(x*100, "% annual harvest"),
+           fill = "moose stage/ \ntick source",
+           x = "time (years)",
+           y = "abundance of moose or questing larvae") +
+      theme_bw() + 
+      # scale_color_viridis(discrete = T, alpha = 0.8) +
+      scale_fill_manual(values = my_pal) +
+      facet_wrap(~spp, scales = "free", nrow = 2)
+  )
+```
 
-```{r no_harvest}
-filter(harvest_df, harvest == 0.0) %>%
-  ggplot() +
-  geom_point(aes(x = t, y = abundance)) +
-  facet_wrap(~spp, nrow = 2, scales = "free") +
-  labs(title = "Dynamics of unharvested moose-tick system",
-       x = "years")
+
+```{r no_harvest, out.width = "50%", fig.show = 'hold'}
+plist[[1]] + 
+  theme(legend.position = "n") +
+  labs(title = paste("Density-dependent tick attachment", 0, "% annual harvest"))
+  
+
+filter(df_flat, near(harvest, 0) & t < 50 & stage %in% c("cows","calves") ) %>%
+      ggplot(mapping = aes(x = t, y = abundance_or_mean, fill = stage)) +
+      geom_area(colour = "white") +
+      labs(title = paste("Density-independent tick attachment", 0, "% annual harvest"),
+           fill = "moose stage/ \ntick source",
+           x = "time (years)",
+           y = "abundance of moose or questing larvae") +
+      theme_bw() + 
+      # scale_color_viridis(discrete = T, alpha = 0.8) +
+      scale_fill_manual(values = my_pal) +
+      facet_wrap(~spp, scales = "free", nrow = 2) + 
+      theme(legend.position = c(0.9,0.8), legend.background = element_blank(),
+            axis.lab.y = element_blank())
+
+# filter(harvest_df, harvest == 0.0) %>%
+#   ggplot() +
+#   geom_point(aes(x = t, y = abundance)) +
+#   facet_wrap(~spp, nrow = 2, scales = "free") +
+#   labs(title = "Dynamics of unharvested moose-tick system",
+#        x = "years")
 ```
 
 In the absence of harvesting, moose were stably regulated by winter ticks. The transient "spikes" in both tick and moose abundance are likely artifacts caused by the assumption of density-independent moose population growth. This is because at the beginning of the simulation, there are too few ticks to regulate moose so they grow exponentially until tick burdens become heavy enough to regulate moose population growth.
 
-```{r coexistence}
-# when moose are regulated by ticks
-h_regulated <- c(0.2, 0.3)
-harvest_df %>%
-  filter(round(harvest,1) %in% h_regulated) %>% # need to round harvest variable due to numerical differences (not sure why they popped up)
-  ggplot() + geom_point(aes(x = t, y = abundance)) +
-  facet_grid(spp ~ harvest, scales = "free") +
-    labs(title = "Low harvests allow for moose-tick coexistence",
-       x = "years")
+```{r coexistence, out.width = '50%', fig.show = 'hold'}
+plist[[2]] + theme(legend.position = "n")
+plist[[3]] + theme(legend.position = c(0.9,0.8), legend.background = element_blank())
+
+# # when moose are regulated by ticks
+# h_regulated <- c(0.2, 0.3)
+# harvest_df %>%
+#   filter(round(harvest,1) %in% h_regulated) %>% # need to round harvest variable due to numerical differences (not sure why they popped up)
+#   ggplot() + geom_point(aes(x = t, y = abundance)) +
+#   facet_grid(spp ~ harvest, scales = "free") +
+#     labs(title = "Low harvests allow for moose-tick coexistence",
+#        x = "years")
+
 ```
 
 At low levels of harvest ($0 <harvest \leq 0.3$) the results are similar to the no harvest strategy. The main difference is that moose and ticks coexist at lower abundances than the unharvested case. These low levels of harvest also produced damped oscillations in moose and tick abundances which indicates that harvesting is destabilizing.
 
-```{r controlled}
-# when ticks are wiped out
-h_controlled <- c(0.4, 0.5)
-harvest_df %>%
-  filter(round(harvest,1) %in% h_controlled) %>% # need to round harvest variable due to numerical differences (not sure why they popped up)
-  ggplot() + geom_point(aes(x = t, y = abundance)) +
-  facet_grid(spp ~ harvest, scales = "free") +
-    labs(title = "Higher harvests control ticks",
-       x = "years")
+```{r controlled, out.width = '50%', fig.show = 'hold'}
+plist[[4]] + theme(legend.position = "n")
+plist[[5]] + theme(legend.position = c(0.9,0.8), legend.background = element_blank())
+# # when ticks are wiped out
+# h_controlled <- c(0.4, 0.5)
+# harvest_df %>%
+#   filter(round(harvest,1) %in% h_controlled) %>% # need to round harvest variable due to numerical differences (not sure why they popped up)
+#   ggplot() + geom_point(aes(x = t, y = abundance)) +
+#   facet_grid(spp ~ harvest, scales = "free") +
+#     labs(title = "Higher harvests control ticks",
+#        x = "years")
+
 ```
 
 At higher levels of harvest ($0.3 < harvest \leq 1$) both moose and ticks populations decline to zero. But, notice that for intermediate harvesting intensities (0.4 and 0.5)  ticks died out sooner than the moose. This indicates that harvesting can theoretically be used to control winter ticks. This result is an emergent property of the feedback between moose population size and tick recruitment. Since constant harvesting strategies caused extirpation of both moose and ticks, it would be useful to model harvesting strategies that varied with time or were dependent on moose population size.
