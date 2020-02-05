@@ -196,25 +196,38 @@ To determine the number of larvae that are recruited from each moose, we need to
 
 Note that I'm assuming that larval recruitment is density-independent. That is, there is no difference when comparing the expected number of larvae produced from an engorged female tick from a lightly-infested moose to one from a heavily-infested moose.  Previous work has shown no evidence of density-dependence for tick-burdens ranging between 20,000-40,000 [@addison_growth_1988], however, this may not be true when infestations are heavier. The assumption of density-independent larval recruitment may bias the model by making tick control harder to achieve.
 
-```{r tick_recr_plot}
+```{r tick_func_forms, out.width='50%', fig.show = 'hold'}
 tick_recr <- tick.recr.x(seq(0, 50000, 1000),
                          tick.params)
 plot(tick_recr ~ seq(0, 50000, 1000),
      main = "Larvae produced from a single moose",
      ylab = "larval recruitment",
      xlab = "tick-burden of a moose")
+
+mean_burdens <- getMu(seq(0, 2*10^9, 10^5) , max = 50, satrate = 10^8)#tick.params["saturationRate"])
+plot(mean_burdens ~ seq(0, 2*10^9, 10^5),
+     main = "Response of moose tick-burden to \nabundance of questing larvae",
+     ylab = "mean tick-burden (thousands of ticks)",
+     xlab = "abundance of questing larvae",
+     type = "l", lwd = 3)
+#abline(h = 38.01055)
+segments(x0 = 0, y0 = 38.01055, x1 = 2*10^9, y1 = 38.01055,
+         lwd = 3, lty = 2, col = "red")
+legend("bottomright", legend = c("density-dependent","density-independent"), 
+       col = c("black","red"), lty = c(1,2), lwd = c(2,2))
 ```
 
 ### Parameters for tick-attachment to moose
 
 For the tick-attachment process there are at least 3 parameters that need to be estimated. The first two are the mean and shape parameters of the negative binomial distribution which controls the distribution of ticks among moose in this model. At least one or more additional parameters is needed to describe the relationship between the abundance of questing larvae in the environment and the mean tick-burden. For the model shown here, I assume a simple functional form which only has one additional parameter. Since I have no data and I haven't found relevant findings in the literature I just chose parameter values that seemed reasonable based on model output. Ideally, the functional form and parameters would be determined from empirical data meeting the conditions outlined previously in *Data Requirements*.
 
-```{r acquisition_func_plot}
-mean_burdens <- getMu(seq(0, 2*10^9, 10^5) , max = 50, satrate = 10^9)
+```{r acquisition_func_plot, eval = FALSE}
+mean_burdens <- getMu(seq(0, 2*10^9, 10^5) , max = 50, satrate = tick.params["saturationRate"])
 plot(mean_burdens ~ seq(0, 2*10^9, 10^5),
      main = "Response of moose tick-burden to \nabundance of questing larvae",
      ylab = "mean tick-burden (thousands of ticks)",
-     xlab = "abundance of questing larvae")
+     xlab = "abundance of questing larvae",
+     type = "l")
 ```
 
 ## Model output example
@@ -242,16 +255,16 @@ plist <-
 ```
 
 
-```{r no_harvest, out.width = "50%", fig.show = 'hold'}
+```{r no_harvest, out.width = "50%", fig.show = 'hold', warning=FALSE}
 plist[[1]] + 
   theme(legend.position = "n") +
-  labs(title = paste("Density-dependent tick attachment", 0, "% annual harvest"))
+  labs(title = paste("Density-dependent tick attachment at", 0, "% annual harvest"))
   
 
 filter(df_flat, near(harvest, 0) & t < 50 & stage %in% c("cows","calves") ) %>%
       ggplot(mapping = aes(x = t, y = abundance_or_mean, fill = stage)) +
       geom_area(colour = "white") +
-      labs(title = paste("Density-independent tick attachment", 0, "% annual harvest"),
+      labs(title = paste("Density-independent tick attachment at", 0, "% annual harvest"),
            fill = "moose stage/ \ntick source",
            x = "time (years)",
            y = "abundance of moose or questing larvae") +
@@ -260,7 +273,7 @@ filter(df_flat, near(harvest, 0) & t < 50 & stage %in% c("cows","calves") ) %>%
       scale_fill_manual(values = my_pal) +
       facet_wrap(~spp, scales = "free", nrow = 2) + 
       theme(legend.position = c(0.9,0.8), legend.background = element_blank(),
-            axis.lab.y = element_blank())
+            axis.title.y = element_blank())
 
 # filter(harvest_df, harvest == 0.0) %>%
 #   ggplot() +
@@ -272,9 +285,10 @@ filter(df_flat, near(harvest, 0) & t < 50 & stage %in% c("cows","calves") ) %>%
 
 In the absence of harvesting, moose were stably regulated by winter ticks. The transient "spikes" in both tick and moose abundance are likely artifacts caused by the assumption of density-independent moose population growth. This is because at the beginning of the simulation, there are too few ticks to regulate moose so they grow exponentially until tick burdens become heavy enough to regulate moose population growth.
 
-```{r coexistence, out.width = '50%', fig.show = 'hold'}
+```{r coexistence, out.width = '50%', fig.show = 'hold', warning=FALSE}
 plist[[2]] + theme(legend.position = "n")
-plist[[3]] + theme(legend.position = c(0.9,0.8), legend.background = element_blank())
+plist[[3]] + theme(legend.position = c(0.9,0.8), legend.background = element_blank(),
+            axis.title.y = element_blank())
 
 # # when moose are regulated by ticks
 # h_regulated <- c(0.2, 0.3)
@@ -289,9 +303,10 @@ plist[[3]] + theme(legend.position = c(0.9,0.8), legend.background = element_bla
 
 At low levels of harvest ($0 <harvest \leq 0.3$) the results are similar to the no harvest strategy. The main difference is that moose and ticks coexist at lower abundances than the unharvested case. These low levels of harvest also produced damped oscillations in moose and tick abundances which indicates that harvesting is destabilizing.
 
-```{r controlled, out.width = '50%', fig.show = 'hold'}
+```{r controlled, out.width = '50%', fig.show = 'hold', warning=FALSE}
 plist[[4]] + theme(legend.position = "n")
-plist[[5]] + theme(legend.position = c(0.9,0.8), legend.background = element_blank())
+plist[[5]] + theme(legend.position = c(0.9,0.8), legend.background = element_blank(),
+            axis.title.y = element_blank())
 # # when ticks are wiped out
 # h_controlled <- c(0.4, 0.5)
 # harvest_df %>%
