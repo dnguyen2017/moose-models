@@ -4,10 +4,10 @@ author: "David Nguyen"
 date: "`r Sys.Date()`"
 output:
   pdf_document:
-  word_document:
-      reference_docx: draft_ms_reference_1.docx
-  html_document:
-    keep_md: true
+  # word_document:
+  #     reference_docx: draft_ms_reference_1.docx
+  # html_document:
+  #   keep_md: true
 bibliography: harvest_analysis_refs.bib
 ---
 
@@ -22,15 +22,105 @@ pagebreak <- function() {
     return('<div style="page-break-before: always;" />')
 }
 
-source("structured_moose_calculations.R")
+tick.params <- c("pEF" = 0.5,      # proportion of tick load that becomes engorged female
+                 "t.surv" = 0.5,   # tick survival 
+                 "l.surv" = 0.3,   # larval survival
+                 "no.eggs" = 5000, # eggs per EF
+                 "maxMu" = 50,     # maximum mean of the burden dist'n. In thousands of ticks.
+                 "saturationRate" = 10^8.5 # how quickly mu(larvae) -> maxMu
+                 )
+
+source("structured_moose_calculations.R") # note, this needs tick.params defined to run
 
 library(tidyverse)
-library(patchwork)
+# library(patchwork)
 library(viridis)
 
-# load and tidy data
-h_out <- read_csv("data/structured_harvest_sensitivity_output.csv")
-h_out_flat <- read_csv("data/flat_structured_harvest_sensitivity_output.csv")
+# # load and tidy data
+# h_out <- read_csv("data/structured_harvest_sensitivity_output.csv")
+# h_out_flat <- read_csv("data/flat_structured_harvest_sensitivity_output.csv")
+# 
+# # get tick contribution from each moose stage. 
+# # Note, I lose the init value of larvae, since the first value of larvae_calf is NA, so larvae[1] - larvae_calf[1] == NA
+# df <-
+#   h_out %>% 
+#   mutate(larvae_cows = larvae_cows - larvae_calves)
+# df_flat <-
+#   h_out_flat %>% 
+#   mutate(larvae_cows = larvae_cows - larvae_calves)
+# 
+# # make two new cols: spp [moose, larvae] & stage [cows, calves]
+# # this allows me to facet by species and then get stage distribution of moose population
+# # and the absolute contribution of each moose stage to questing tick recruitment
+# df <- 
+#   df %>%
+#   pivot_longer(#cols = c("moose_cows","moose_calves","larvae_cows","larvae_calves"),
+#     cols = -c(t,harvest),
+#                names_sep = "_",
+#                names_to = c("spp", "stage"),
+#                values_to = "abundance_or_mean")
+# 
+# df_flat <- 
+#   df_flat %>%
+#   pivot_longer(#cols = c("moose_cows","moose_calves","larvae_cows","larvae_calves"),
+#     cols = -c(t,harvest),
+#                names_sep = "_",
+#                names_to = c("spp", "stage"),
+#                values_to = "abundance_or_mean")
+
+# params for moose survival
+# params for moose survival
+cow.params <- c("surv.int" = unname(coef(surv_cow)[1]),
+                "surv.slope" = unname(coef(surv_cow)[2])
+)
+calf.params <- c("surv.int" = unname(coef(surv_calf)[1]),
+                 "surv.slope" = unname(coef(surv_calf)[2])
+)
+# note, calves.multi is the multinomial regression model for the calving function
+
+# true survival and calving probabilities
+true_probs <- read_csv("data/true_moose_probabilities.csv")
+
+# set color palette
+my_pal <- c("cows" = "#44015480", "calves" = "#21908CFF")
+```
+
+```{r sensitivity_analysis, dependson=tick.params, include=FALSE}
+# analysis of harvesting rates
+harvest_rates <- seq(0, 1, 0.1)
+
+# simulate for different harvest rates
+h_sensitivity <- lapply(harvest_rates, function(x) structured_moose_model(initCalf = 50, # init no. female calf moose
+                                                                          initCow = 100, # init no. female moose
+                                                                          q0 = 10^6, # init no. questing larvae
+                                                                          tfinal = 100, # max number of years
+                                                                          calf_surv = calf.params,
+                                                                          cow_surv = cow.params,
+                                                                          calving_model = calves.multi,
+                                                                          tick_params = tick.params,
+                                                                          harvest = x, # annual proportion of moose harvested
+                                                                          xmin = 0, # minimum burden
+                                                                          xmax = 150, # maximum burden
+                                                                          xsize = 150, # size of iteration matrix
+                                                                          xincrement = 1000))
+
+h_sensitivity_flat <- lapply(harvest_rates, function(x) flat_moose_model(initCalf = 50, # init no. female calf moose
+                                                                          initCow = 100, # init no. female moose
+                                                                          q0 = 10^6, # init no. questing larvae
+                                                                          tfinal = 100, # max number of years
+                                                                          calf_surv = calf.params,
+                                                                          cow_surv = cow.params,
+                                                                          calving_model = calves.multi,
+                                                                          tick_params = tick.params,
+                                                                          harvest = x, # annual proportion of moose harvested
+                                                                          xmin = 0, # minimum burden
+                                                                          xmax = 150, # maximum burden
+                                                                          xsize = 150, # size of iteration matrix
+                                                                          xincrement = 1000))
+
+# extract output of harvest rate analysis
+h_out <- bind_rows(h_sensitivity)
+h_out_flat <- bind_rows(h_sensitivity_flat)
 
 # get tick contribution from each moose stage. 
 # Note, I lose the init value of larvae, since the first value of larvae_calf is NA, so larvae[1] - larvae_calf[1] == NA
@@ -60,30 +150,8 @@ df_flat <-
                names_to = c("spp", "stage"),
                values_to = "abundance_or_mean")
 
-# params for moose survival
-# params for moose survival
-cow.params <- c("surv.int" = unname(coef(surv_cow)[1]),
-                "surv.slope" = unname(coef(surv_cow)[2])
-)
-calf.params <- c("surv.int" = unname(coef(surv_calf)[1]),
-                 "surv.slope" = unname(coef(surv_calf)[2])
-)
-# note, calves.multi is the multinomial regression model for the calving function
-
-tick.params <- c("pEF" = 0.5,      # proportion of tick load that becomes engorged female
-                 "t.surv" = 0.5,   # tick survival 
-                 "l.surv" = 0.3,   # larval survival
-                 "no.eggs" = 5000, # eggs per EF
-                 "maxMu" = 50,     # maximum mean of the burden dist'n. In thousands of ticks.
-                 "saturationRate" = 10^9 # how quickly mu(larvae) -> maxMu
-                 )
-
-# true survival and calving probabilities
-true_probs <- read_csv("data/true_moose_probabilities.csv")
-
-# set color palette
-my_pal <- c("cows" = "#44015480", "calves" = "#21908CFF")
 ```
+
 
 ## Purpose
 
@@ -114,7 +182,7 @@ The simplest population models describe how population-average birth and death r
 
 Since tick-burden varies among moose and the fitness consequences suffered by each moose varies depending on the numbers of ticks it carries, we need to explicitly model variation in tick-burden. By connecting burden-structured models with fields estimates of moose survival and fecundity across different tick-burdens we could make population projections for both moose and ticks. Populations of ticks can be modeled because the numbers of questing larvae each fall depends on the numbers of ticks feeding on moose the previous year, which is obtained in the model by summing the tick-burdens over the moose population from the previous year. Modeling tick populations is needed because it allows for the calculation of the population growth rate of tick, $R_0$, which can be used to calculate host population thresholds for disease persistence [@allen_basic_2008].
 
-$R_0$ has the same interpretation as the population growth rate ($\lambda$) estimated using matrix projection models, i.e., tick epizootics can occur when $R_0 > 1$ and epizootics won't occur when $R_0 < 1$. Similar to how sensitivity analysis of $\lambda$ can be used to evaluate how management actions might impact the population growth of moose, sensitivity analysis of $R_0$ can be used to evaluate how alternative management actions could be used to control winter tick epizootics [@klepac_stage-structured_2011]. Uncertainty in parameter estimates for moose and tick population growth can also be propagated into the uncertainty of moose population thresholds estimated using the $R_0$ approach. can be calculated using standard methods from mathematical epidemiology [@allen_basic_2008; @klepac_stage-structured_2011]. Overall, this means that parameterized burden-structured models could be used to estimate moose population thresholds for tick control and calculate the uncertainty of the estimated threshold which would be useful for managers seeking to control tick epizootics.
+$R_0$ has the same interpretation as the population growth rate ($\lambda$) estimated using matrix projection models, i.e., tick epizootics can occur when $R_0 > 1$ and epizootics won't occur when $R_0 < 1$. Similar to how sensitivity analysis of $\lambda$ can be used to evaluate how management actions might impact the population growth of moose, sensitivity analysis of $R_0$ can be used to evaluate how alternative management actions could be used to control winter tick epizootics [@klepac_stage-structured_2011]. Uncertainty in parameter estimates for moose and tick population growth can also be propagated into the uncertainty of moose population thresholds estimated using the $R_0$ approach. $R_0$ can be calculated using standard methods from mathematical epidemiology [@allen_basic_2008; @klepac_stage-structured_2011]. Overall, this means that parameterized burden-structured models could be used to estimate moose population thresholds for tick control and calculate the uncertainty of the estimated threshold which would be useful for managers seeking to control tick epizootics.
 
 <!-- When parameterized with field data, calculation of $R_0$ from the burden-structured model will provide estimates of the moose population thresholds for tick persistence and allow for quantitiative assessment of different havesting strategies based on how they change $R_0$. -->
 
@@ -253,7 +321,7 @@ legend("topright", legend = c("observed survival","estimated survival probabilit
 
 ### Parameters for larval tick recruitment
 
-To determine the number of larvae that are recruited from each moose, we need to take the product of the following quantities: the proportion of ticks on a moose that are engorged females, the average number of eggs each engorged female lays, and the expected proportion of those eggs from which larvae eclose and survive until the fall questing season. For the model shown here, I assumed that 25 % of the ticks on a moose survived to become engorged females based on a point estimate reported by @samuel_white_2004. These surviving engorged females each lay an expected 5,000 eggs which is the upper-bound of winter tick egg-laying [@drummond_biology_1969]. I arbitrarily set larval eclosion and survival at 30 % of total eggs, since the controlled studies I have read did not measure eclosion success. These rough estimates and assumptions result in 375 larvae recruited per infesting tick. Below is a plot showing how larval recruitment per moose increases with the moose's tick-burden.
+To determine the number of larvae that are recruited from each moose, we need to take the product of the following quantities: the proportion of ticks on a moose that are engorged females, the average number of eggs each engorged female lays, and the expected proportion of those eggs from which larvae eclose and survive until the fall questing season. For the model shown here, I assumed that 25 % of the ticks on a moose survived to become engorged females based on a point estimate reported by @samuel_white_2004. These surviving engorged females each lay an expected 5,000 eggs which is the upper-bound of winter tick egg-laying [@drummond_biology_1969]. I arbitrarily set larval eclosion and survival at 30 % of total eggs, since the controlled studies I have read did not measure eclosion success. These rough estimates and assumptions result in `r tick.params["pEF"] * tick.params["t.surv"] * tick.params["l.surv"] * tick.params["no.eggs"]` larvae recruited per infesting tick. Below is a plot showing how larval recruitment per moose increases with the moose's tick-burden.
 
 Note that I'm assuming that larval recruitment is density-independent. That is, there is no difference when comparing the expected number of larvae produced from an engorged female tick from a lightly-infested moose to one from a heavily-infested moose.  Previous work has shown no evidence of density-dependence for tick-burdens ranging between 20,000-40,000 [@addison_growth_1988], however, this may not be true when infestations are heavier. The assumption of density-independent larval recruitment may bias the model by making tick control harder to achieve.
 
@@ -264,15 +332,14 @@ plot(tick_recr ~ seq(0, 50000, 1000),
      main = "A. Larvae produced from a single moose",
      ylab = "larval recruitment",
      xlab = "tick-burden of a moose")
-
-mean_burdens <- getMu(seq(0, 2*10^9, 10^5) , max = 50, satrate = 10^8)#tick.params["saturationRate"])
+mean_burdens <- getMu(seq(0, 2*10^9, 10^5) , max = 50, satrate = tick.params["saturationRate"])
 plot(mean_burdens ~ seq(0, 2*10^9, 10^5),
      main = "B. Response of moose tick-burden to \nabundance of questing larvae",
      ylab = "mean tick-burden (thousands of ticks)",
      xlab = "abundance of questing larvae",
      type = "l", lwd = 3)
 #abline(h = 38.01055)
-segments(x0 = 0, y0 = 38.01055, x1 = 2*10^9, y1 = 38.01055,
+segments(x0 = 0, y0 = mu_flat, x1 = 2*10^9, y1 = mu_flat, # if satRate = 10^8.5, mu_flat = 27.45199
          lwd = 3, lty = 2, col = "red")
 legend("bottomright", legend = c("density-dependent","density-independent"), 
        col = c("black","red"), lty = c(1,2), lwd = c(2,2))
@@ -350,7 +417,7 @@ filter(df_flat, near(harvest, 0) & t < 50 & stage %in% c("cows","calves") ) %>%
 ```
 *Fig. 3. Comparison of density-dependent and density-independent tick attachment.*
 
-Long term density-dependent projections result in a low moose populations which is regulated by tick parasitism. This is contrasted with density-independent projections which predict extirpation of both moose and ticks. Density-independent tick attachment was implicitly assumed in a previous model [@jones_assessment_2016]. This is an issue because density-independent tick attachment cannot result in threshold for tick persistence because there is no feedback between moose population size and tick population growth [see Fig. 3-6 and 4-1 in @jones_assessment_2016]. This is why the projections in Fig. 3B above and in Fig. 3-6 in @jones_assessment_2016 exhibit exponential declines to extirpation instead of a low and stable moose population (Fig. 3A). This issue could be circumvented by including moose population thresholds as a model assumption [Fig. 4-1 in @jones_assessment_2016]. However, modeling moose populations in this way does not address whether moose population thresholds for tick persistence actually exist or allow us to estimate the threshold. The rest of the projection in this document are for the density-dependent attachment case.
+Long term density-dependent projections result in a low moose populations which is regulated by tick parasitism. This is contrasted with density-independent projections which predict extirpation of both moose and ticks. Density-independent tick attachment was implicitly assumed in a previous model [@jones_assessment_2016]. This is an issue because density-independent tick attachment cannot result in threshold for tick persistence because there is no feedback between moose population size and tick population growth [see Fig. 3-6 and 4-1 in @jones_assessment_2016]. This is why the projections in Fig. 3B above and in Fig. 3-6 in @jones_assessment_2016 exhibit exponential declines to extirpation instead of a low and stable moose population (Fig. 3A). This issue could be circumvented by including moose population thresholds as a model assumption [Fig. 4-1 in @jones_assessment_2016]. However, directly assuming that moose population thresholds exist precludes us from estimating the threshold and asking questions about what factors affect the value of thresholds. For this reason, the rest of the model projections in this document are for the density-dependent attachment case.
 
 <!-- In the absence of harvesting, moose were stably regulated by winter ticks when tick attachment is density-dependent. -->
 Note that the transient "spikes" in both tick and moose abundance at the start of simulations are artifacts caused by the assumption of density-independent moose population growth. This is because at the beginning of the simulation, there are too few ticks to regulate moose so they grow exponentially until tick burdens become heavy enough to regulate moose population growth. This should disappear if moose fecundity was density-dependent.
@@ -371,12 +438,12 @@ plist[[3]] + theme(legend.position = c(0.9,0.8), legend.background = element_bla
 
 ```
 
-At low levels of harvest ($0 <harvest \leq 0.3$) the results are similar to the no harvest strategy. The main difference is that moose and ticks coexist at lower abundances than the unharvested case. These low levels of harvest also produced damped oscillations in moose and tick abundances which indicates that harvesting is destabilizing.
+At low levels of harvest ($0 <harvest \leq 0.2$) the results are similar to the no harvest strategy. The main difference is that moose and ticks coexist at lower abundances than the unharvested case. These low levels of harvest also produced damped oscillations in moose and tick abundances which indicates that harvesting is destabilizing.
 
 ```{r controlled, out.width = '50%', fig.show = 'hold', warning=FALSE}
-plist[[4]] + theme(legend.position = "n")
+plist[[4]] + theme(legend.position = "n") + xlim(0,20)
 plist[[5]] + theme(legend.position = c(0.9,0.8), legend.background = element_blank(),
-            axis.title.y = element_blank())
+            axis.title.y = element_blank()) + xlim(0,20)
 # # when ticks are wiped out
 # h_controlled <- c(0.4, 0.5)
 # harvest_df %>%
@@ -387,7 +454,7 @@ plist[[5]] + theme(legend.position = c(0.9,0.8), legend.background = element_bla
 #        x = "years")
 
 ```
-At higher levels of harvest ($0.3 < harvest \leq 1$) both moose and ticks populations decline to zero. But, notice that for intermediate harvesting intensities (0.4 and 0.5)  ticks died out sooner than the moose. This indicates that harvesting can theoretically be used to control winter ticks. This result emerges from the feedback between moose population size and tick recruitment. Since constant harvesting strategies caused extirpation of both moose and ticks, it would be useful to model harvesting strategies that varied with time or were dependent on moose population size.
+At higher levels of harvest ($0.3 \leq harvest \leq 1$) both moose and ticks populations decline to zero. But, notice that for intermediate harvesting intensities (0.4 and 0.5)  ticks died out sooner than the moose. This indicates that harvesting can theoretically be used to control winter ticks. This result emerges from the feedback between moose population size and tick recruitment. Since constant harvesting strategies caused extirpation of both moose and ticks, it would be useful to model harvesting strategies that varied with time or were dependent on moose population size.
 
 Using time- or state-dependent harvesting was proposed by @samuel_white_2004 to control tick outbreaks by dynamically regulating moose populations below levels which allow for tick outbreaks. However, the success of this approach depends on knowing the critical thresholds where tick outbreaks can occur so that moose populations can be managed below it. By parameterizing the burden-structured models I developed here with empirical data, we estimate the critical moose population thresholds for winter tick outbreaks from calculation of $R_0$ in a way similar to  how herd-immunity thresholds are estimated for vaccine-preventable human diseases. 
 <!-- Dynamic optimization methods [stochastic dynamic programming; @marescot_complex_2013] could be then used to develop state-dependent harvesting strategies to meet specific management objectives. -->
@@ -402,7 +469,7 @@ The flexibility of structured population models also will also allow us (given a
 * weather data Ball used for predicting tick counts
 * maybe the movement data used to parameterize Healy's ABM
 
-* Bill Samuels data from Elk Island National park (might be a good out-of-sample check - would our estimates of the moose density threshold match up with the 1 moose/km^2^ threshold claimed by Samuel?)
+* Bill Samuel's data from Elk Island National park (might be a good out-of-sample check - would our estimates of the moose density threshold match up with the 1 moose/km^2^ threshold claimed by Samuel?)
 
 
 `r pagebreak()`
