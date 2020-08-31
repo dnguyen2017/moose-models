@@ -1,5 +1,5 @@
 # ESA 2020 presentation abstract
-For additional details of analysis see
+For additional details of analysis refer to harvest_analysis.pdf in this repository.
 
 # Background/Question/Methods
 
