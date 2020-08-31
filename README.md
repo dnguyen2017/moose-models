@@ -1,5 +1,5 @@
 # ESA 2020 presentation abstract
-For additional details of analysis refer to harvest_analysis.pdf in this repository.
+For additional details of analysis refer to [harvest_analysis.pdf](https://github.com/dnguyen2017/moose-models/blob/master/harvest_analysis.pdf) in this repository.
 
 # Background/Question/Methods
 
