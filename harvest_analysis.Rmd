@@ -188,10 +188,10 @@ $R_0$ has the same interpretation as the population growth rate ($\lambda$) esti
 
 ## Model structure and assumptions
 
-The model tracks two state variables over time, the abundance of ticks in the environment (questing larvae) and numbers of adult moose cows. Events in the model follow a simplified version of the annual sequence of interactions between moose and winter ticks. The following five events happen in order during each annual time step of the model.
+The model tracks two state variables over time, the abundance of ticks in the environment (questing larvae) and numbers of adult moose cows. Events in the model follow a simplified version of the annual sequence of interactions between moose and winter ticks. The following five events happen in order during each annual time step of the model. A mathematical description of the model is given in the appendix.
 
 1. *Moose acquire ticks from the environment.* 
-    + The resulting distribution of burdens is assumed to be have a negative binomial distribution; the negative binomial distribution is used because it allows for high variation in burden (over-dispersion) which is common for parasites like ticks [@shaw_patterns_1995] and is observable in histograms [figure 5.2 in @samuel_white_2004] and summary statistics of moose tick burdens [e.g., table 2-2 in @jones_assessment_2016]. 
+    + The resulting distribution of burdens is assumed to be have a negative binomial distribution; the negative binomial distribution is used because it allows for high variation in burden (over-dispersion) which is common for parasites like ticks [@shaw_patterns_1995]. This assumption is observable in histograms [figure 5.2 in @samuel_white_2004] and summary statistics of moose tick burdens [e.g., table 2-2 in @jones_assessment_2016] and was used in a statistical model for tick abundance for these reasons [@ball_moose_2017]. 
     + The mean of the burden distribution was assumed to increase with questing larval abundance, i.e., if there are many questing larvae in the environment moose will acquire more ticks which increases the average tick-burden among the moose population. This is consistent with findings from Samuel's comparison of flagged larvae and tick burdens on moose [@samuel_factors_2007]. The functional form relating abundance of questing larvae and the mean moose burden should be determined from empirical data.
 
 2. *A proportion of moose is harvested.* 
@@ -240,7 +240,7 @@ This is the most challenging question to answer, but is critical for modeling ti
 
 ### Estimating impact of tick-burden on survival and calving
 
-I use a simulated data set to demonstrate how parameters could be estimated from individual-level observations of cow moose. The data set consists of measurements of tick-burden, survival, and calving. Tick burden was simulated following a negative binomial distribution (mean = 33,000 ticks/moose, dispersion parameter (k) = 3). 
+I use a simulated data set to demonstrate how parameters could be estimated from individual-level observations of cow and calf moose. The data set consists of measurements of tick-burden, survival, and calving. Tick burden was simulated following a negative binomial distribution (mean = 33,000 ticks/moose, dispersion parameter (k) = 3). 
 <!-- Modeling burden as negative binomial distributed is supported by previous work on parasite aggregation [@shaw_patterns_1995].  -->
 The parameters were chosen to qualitatively match a histogram of winter tick burdens among moose presented by @samuel_white_2004. Each of the moose in the simulated data set were then assigned a survival outcome and number of calves produced. Survival outcomes and number of calves were assigned from binomial and multinomial distributions, respectively. Probabilities of survival and calving were assumed to be decreasing functions of tick burden. 
 
@@ -437,6 +437,7 @@ plist[[3]] + theme(legend.position = c(0.9,0.8), legend.background = element_bla
 #        x = "years")
 
 ```
+*Fig. 4. Moose and questing tick population dynamics under low to moderate harvesting.*
 
 At low levels of harvest ($0 <harvest \leq 0.2$) the results are similar to the no harvest strategy. The main difference is that moose and ticks coexist at lower abundances than the unharvested case. These low levels of harvest also produced damped oscillations in moose and tick abundances which indicates that harvesting is destabilizing.
 
@@ -454,6 +455,8 @@ plist[[5]] + theme(legend.position = c(0.9,0.8), legend.background = element_bla
 #        x = "years")
 
 ```
+*Fig. 5. Moose and questing tick population dynamics under heavy harvesting.*
+
 At higher levels of harvest ($0.3 \leq harvest \leq 1$) both moose and ticks populations decline to zero. But, notice that for intermediate harvesting intensities (0.4 and 0.5)  ticks died out sooner than the moose. This indicates that harvesting can theoretically be used to control winter ticks. This result emerges from the feedback between moose population size and tick recruitment. Since constant harvesting strategies caused extirpation of both moose and ticks, it would be useful to model harvesting strategies that varied with time or were dependent on moose population size.
 
 Using time- or state-dependent harvesting was proposed by @samuel_white_2004 to control tick outbreaks by dynamically regulating moose populations below levels which allow for tick outbreaks. However, the success of this approach depends on knowing the critical thresholds where tick outbreaks can occur so that moose populations can be managed below it. By parameterizing the burden-structured models I developed here with empirical data, we estimate the critical moose population thresholds for winter tick outbreaks from calculation of $R_0$ in a way similar to  how herd-immunity thresholds are estimated for vaccine-preventable human diseases. 
@@ -463,13 +466,32 @@ Overall, this approach will allow us to simultaneously account for the impact of
 <!-- This constitutes the set of ecological interactions needed to connect harvesting actions to management outcomes.  -->
 The flexibility of structured population models also will also allow us (given adequate data) to included factors like moose population density and weather variables on moose and tick parameters. Furthermore, the output and structure of burden-structured models should be straight-forward to interpret for moose biologists and managers since burden-structured models share the ideas underlying the matrix population models commonly used in moose population assessment.
 
-## insert plea for data
-* known fate data and tick burdens
-* tick burden counts on harvested moose (snapshots)
-* weather data Ball used for predicting tick counts
-* maybe the movement data used to parameterize Healy's ABM
+<!-- ## insert plea for data -->
+<!-- * known fate data and tick burdens -->
+<!-- * tick burden counts on harvested moose (snapshots) -->
+<!-- * weather data Ball used for predicting tick counts -->
+<!-- * maybe the movement data used to parameterize Healy's ABM -->
 
-* Bill Samuel's data from Elk Island National park (might be a good out-of-sample check - would our estimates of the moose density threshold match up with the 1 moose/km^2^ threshold claimed by Samuel?)
+<!-- * Bill Samuel's data from Elk Island National park (might be a good out-of-sample check - would our estimates of the moose density threshold match up with the 1 moose/km^2^ threshold claimed by Samuel?) -->
+`r pagebreak()`
+# Appendix
+
+\begin{equation}
+n_{t+1} = P R S H A(q_t) n_t
+\end{equation}
+\begin{equation}
+q_{t+1} = L n_t
+\end{equation}
+
+Where:
+
+* $n_t = \begin{bmatrix} n_{c1} \\ n_{c2} \\ \vdots \\ n_{cb} \\ n_{a1} \\ n_{a2} \\ \vdots \\ n_{ab}  \end{bmatrix}$ is a population vector where each element is the number of calves ($n_{ci}$) or cow moose ($n_{ai}$) in the $i = 1, \ldots, b$ burden 
+* $q_t$ is the number of total winter tick larvae questing for moose each fall. $L$ is a diagonal matrix which contains the expected number of questing larvae recruited from each moose in each burden class. The determination of the these values is as described in the main text.
+* $A(q_t) = \text{diag}\begin{bmatrix}p_{c1} & p_{c2} & \cdots & p_{cb} & p_{a1} & p_{a2} & \cdots & p_{ab}\end{bmatrix}$ where $p_{ci}$ and $p_{ai}$ is the expected proportion of calves and cows that would acquire a number of ticks within the  $i^{th}$ burden class given that the burden distribution follows a negative binomial distribution where the mean of the negative binomial is a increasing and saturating function of $q_t$. In this document, it is assumed that $p_{ci} = p_{ai}$ for all $i = 1, \ldots, b$.
+* $H = (1-h) I_{2b \times 2b}$ is a matrix that reduces the population by the annual proportion of moose harvested $h$. 
+* $S = \text{diag}\begin{bmatrix}s_{c1} & s_{c2} & \cdots & s_{cb} & s_{a1} & s_{a2} & \cdots & s_{ab}\end{bmatrix}$ is the survival matrix which contains the probability of survival for calves and cows in each burden class. The probabilities are calculated from a logistic regression model of survival probability as a function of moose stage and burden level. Here, these data were simulated.
+* $R = \begin{bmatrix} 0_{b \times b} & G_{b \times b} \\ I_{b \times b} & _{b \times b}\end{bmatrix}$ describes the number of calves born to cows in each burden class where $G$ is a matrix that has a first row that contains the expected number of calves for cows in each burden class and 0 elsewhere. Here, the expected number of calves is predicted from a multinomial regression model fit to simulated data.
+* $P =\begin{bmatrix} J_{b \times b} & 0_{b \times b} \\ 0_{b \times b} & J_{b \times b}\end{bmatrix}$ where $J$ is a matrix that has 1s in the first row and zeros elsewhere. This matrix pools all moose back into the appropriate zero burden class since all ticks detach in the spring.
 
 
 `r pagebreak()`
